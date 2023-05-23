@@ -17,16 +17,30 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <obs-module.h>
+#include <obs-source.h>
 
 #include "plugin-macros.generated.h"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
+bool obs_hadowplay_consume_enum_source(void *param, obs_source_t *source)
+{
+	UNUSED_PARAMETER(param);
+	UNUSED_PARAMETER(source);
+
+	blog(LOG_INFO, "Source found");
+
+	return true;
+}
+
 bool obs_module_load(void)
 {
 	blog(LOG_INFO, "plugin loaded successfully (version %s)",
 	     PLUGIN_VERSION);
+
+	obs_enum_sources(obs_hadowplay_consume_enum_source, NULL);
+
 	return true;
 }
 
