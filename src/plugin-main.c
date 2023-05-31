@@ -121,8 +121,8 @@ bool obs_module_load(void)
 {
 	module_loaded = true;
 
-	obs_frontend_add_event_callback(
-		obs_hadowplay_frontend_event_callback, NULL);
+	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
+					NULL);
 
 	blog(LOG_INFO, "plugin loaded successfully (version %s)",
 	     PLUGIN_VERSION);
@@ -139,9 +139,7 @@ void obs_module_unload()
 	int result = pthread_join(update_thread, &return_val);
 	if (result == 0) {
 		blog(LOG_INFO, "Update thread closed");
-	}
-	else
-	{
+	} else {
 		blog(LOG_ERROR, "Failed to join update thread: %d", result);
 	}
 
