@@ -33,34 +33,22 @@ void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 {
 	UNUSED_PARAMETER(parent);
 
-	bool *found = (bool *)param;
+	obs_source_t **active_game_capture = param;
 
-	if (*found == true)
+	if (*active_game_capture != NULL)
 		return;
 
 	const char *id = obs_source_get_id(source);
 
 	if (strcmp(id, "game_capture") == 0) {
 
-		const char *source_name = obs_source_get_name(source);
-
-		blog(LOG_INFO, "Game capture found: %s", source_name);
-
 		uint32_t width = obs_source_get_width(source);
 		uint32_t height = obs_source_get_height(source);
 
-		*found = width > 0 && height > 0;
+		bool is_active = width > 0 && height > 0;
 
-		bool activate_replay = *found &&
-				       !obs_frontend_replay_buffer_active();
-
-		bool deactivate_replay = width == 0 && height == 0 &&
-					 obs_frontend_replay_buffer_active();
-
-		if (activate_replay) {
-			obs_frontend_replay_buffer_start();
-		} else if (deactivate_replay) {
-			obs_frontend_replay_buffer_stop();
+		if (is_active) {
+			*active_game_capture = obs_source_get_ref(source);
 		}
 	}
 }
@@ -69,16 +57,37 @@ void *obs_hadowplay_update(void *param)
 {
 	UNUSED_PARAMETER(param);
 
-	while (1) {
-		blog(LOG_INFO, "Update");
+	char thread_name[64];
+	snprintf(thread_name, 64, "%s update thread", PLUGIN_NAME);
+	os_set_thread_name(thread_name);
 
+	while (1) {
 		obs_source_t *scene_source = obs_frontend_get_current_scene();
 
-		bool found = false;
+		obs_source_t *game_capture_source = NULL;
 
 		obs_source_enum_active_sources(
 			scene_source, obs_hadowplay_consume_enum_source,
-			&found);
+			&game_capture_source);
+
+		if (game_capture_source != NULL) {
+			if (obs_frontend_replay_buffer_active() == false) {
+				const char *source_name = obs_source_get_name(
+					game_capture_source);
+				blog(LOG_INFO, "Active game capture found: %s",
+				     source_name);
+				obs_frontend_replay_buffer_start();
+				blog(LOG_INFO, "Replay buffer started");
+			}
+
+			obs_source_release(game_capture_source);
+		} else {
+			if (obs_frontend_replay_buffer_active() == true) {
+				blog(LOG_INFO, "No active game capture found");
+				obs_frontend_replay_buffer_stop();
+				blog(LOG_INFO, "Replay buffer stopped");
+			}
+		}
 
 		obs_source_release(scene_source);
 
@@ -94,17 +103,16 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	UNUSED_PARAMETER(private_data);
 
 	if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
-
-		blog(LOG_INFO, "Frontend finished loading");
-
 		pthread_t update_thread;
 
-		if (pthread_create(&update_thread, NULL, obs_hadowplay_update, NULL) != 0)
-		{
+		if (pthread_create(&update_thread, NULL, obs_hadowplay_update,
+				   NULL) != 0) {
 			blog(LOG_ERROR,
-			     "Failed to create %s update thread, plugin is no longer able to track when to toggle the replay buffer.",
+			     "Failed to create %s update thread, plugin is no longer able to track when to toggle the replay buffer",
 			     PLUGIN_NAME);
 		}
+
+		// TODO: Clean up update thread on unload.
 	}
 }
 
