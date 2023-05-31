@@ -134,18 +134,15 @@ void obs_module_unload()
 {
 	module_loaded = false;
 
-	if (update_thread.p != NULL)
+	blog(LOG_INFO, "Awaiting update thread closure");
+	void *return_val = NULL;
+	int result = pthread_join(update_thread, &return_val);
+	if (result == 0) {
+		blog(LOG_INFO, "Update thread closed");
+	}
+	else
 	{
-		blog(LOG_INFO, "Awaiting update thread closure");
-		void *return_val = NULL;
-		int result = pthread_join(update_thread, &return_val);
-		if (result == 0) {
-			blog(LOG_INFO, "Update thread closed");
-		}
-		else
-		{
-			blog(LOG_ERROR, "Failed to join update thread: %d", result);
-		}
+		blog(LOG_ERROR, "Failed to join update thread: %d", result);
 	}
 
 	blog(LOG_INFO, "plugin unloaded");
