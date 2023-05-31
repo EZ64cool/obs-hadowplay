@@ -97,9 +97,9 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		blog(LOG_INFO, "Frontend finished loading");
 
-		pthread_t *update_thread = NULL;
+		pthread_t update_thread;
 
-		if (pthread_create(update_thread, NULL, obs_hadowplay_update, NULL) != 0)
+		if (pthread_create(&update_thread, NULL, obs_hadowplay_update, NULL) != 0)
 		{
 			blog(LOG_ERROR,
 			     "Failed to create %s update thread, plugin is no longer able to track when to toggle the replay buffer.",
