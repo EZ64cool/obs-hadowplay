@@ -21,9 +21,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-frontend-api.h>
 #include <obs-source.h>
 #include <util/platform.h>
-//#include <util/threading.h>
-
-#include <Windows.h>
+#include <util/threading.h>
 
 #include "plugin-macros.generated.h"
 
@@ -67,7 +65,7 @@ void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 	}
 }
 
-DWORD obs_hadowplay_update(void *param)
+void *obs_hadowplay_update(void *param)
 {
 	UNUSED_PARAMETER(param);
 
@@ -99,10 +97,9 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		blog(LOG_INFO, "Frontend finished loading");
 
-		// pthread_t *thread = NULL;
-		// pthread_create(thread, NULL, obs_hadowplay_update, NULL);
+		pthread_t *update_thread = NULL;
 
-		CreateThread(NULL, 0, obs_hadowplay_update, NULL, 0, NULL);
+		pthread_create(update_thread, NULL, obs_hadowplay_update, NULL);
 	}
 }
 
