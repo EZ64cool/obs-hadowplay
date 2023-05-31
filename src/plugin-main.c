@@ -53,6 +53,8 @@ void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 	}
 }
 
+bool module_loaded = false;
+
 void *obs_hadowplay_update(void *param)
 {
 	UNUSED_PARAMETER(param);
@@ -61,7 +63,7 @@ void *obs_hadowplay_update(void *param)
 	snprintf(thread_name, 64, "%s update thread", PLUGIN_NAME);
 	os_set_thread_name(thread_name);
 
-	while (1) {
+	while (module_loaded == true) {
 		obs_source_t *scene_source = obs_frontend_get_current_scene();
 
 		obs_source_t *game_capture_source = NULL;
@@ -97,37 +99,54 @@ void *obs_hadowplay_update(void *param)
 	return 0;
 }
 
+pthread_t update_thread;
+
 void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 					   void *private_data)
 {
 	UNUSED_PARAMETER(private_data);
 
 	if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
-		pthread_t update_thread;
-
-		if (pthread_create(&update_thread, NULL, obs_hadowplay_update,
-				   NULL) != 0) {
+		int result = pthread_create(&update_thread, NULL,
+					    obs_hadowplay_update, NULL);
+		if (result != 0) {
 			blog(LOG_ERROR,
-			     "Failed to create %s update thread, plugin is no longer able to track when to toggle the replay buffer",
-			     PLUGIN_NAME);
+			     "Failed to create update thread (code %d), plugin is no longer able to track when to toggle the replay buffer",
+			     result);
 		}
-
-		// TODO: Clean up update thread on unload.
 	}
 }
 
 bool obs_module_load(void)
 {
+	module_loaded = true;
+
+	obs_frontend_add_event_callback(
+		obs_hadowplay_frontend_event_callback, NULL);
+
 	blog(LOG_INFO, "plugin loaded successfully (version %s)",
 	     PLUGIN_VERSION);
-
-	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
-					NULL);
 
 	return true;
 }
 
 void obs_module_unload()
 {
+	module_loaded = false;
+
+	if (update_thread.p != NULL)
+	{
+		blog(LOG_INFO, "Awaiting update thread closure");
+		void *return_val = NULL;
+		int result = pthread_join(update_thread, &return_val);
+		if (result == 0) {
+			blog(LOG_INFO, "Update thread closed");
+		}
+		else
+		{
+			blog(LOG_ERROR, "Failed to join update thread: %d", result);
+		}
+	}
+
 	blog(LOG_INFO, "plugin unloaded");
 }
