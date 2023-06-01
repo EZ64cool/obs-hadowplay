@@ -10,7 +10,7 @@ add_library(${CMAKE_PROJECT_NAME} MODULE)
 set(PLUGIN_AUTHOR "EZ64cool")
 
 # Replace 'https://www.example.com` with a link to the website of your plugin or repository
-set(PLUGIN_WEBSITE "")
+set(PLUGIN_WEBSITE "https://github.com/EZ64cool/obs-hadowplay")
 
 # Replace `com.example.obs-plugin-template` with a unique Bundle ID for macOS releases (used both in
 # the installer and when submitting the installer for notarization)
