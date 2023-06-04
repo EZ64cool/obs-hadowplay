@@ -22,6 +22,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-source.h>
 #include <util/platform.h>
 #include <util/threading.h>
+#include <util/dstr.h>
 
 #include "plugin-macros.generated.h"
 
@@ -58,6 +59,8 @@ bool obs_hadowplay_manual_start = false;
 bool obs_hadowplay_manual_stop = false;
 bool obs_hadowplay_module_loaded = false;
 
+extern bool GetCurrentForegroundProcessName(struct dstr* process_name);
+
 void *obs_hadowplay_update(void *param)
 {
 	UNUSED_PARAMETER(param);
@@ -67,6 +70,13 @@ void *obs_hadowplay_update(void *param)
 	os_set_thread_name(thread_name);
 
 	while (os_atomic_load_bool(&obs_hadowplay_module_loaded) == true) {
+
+		struct dstr process_name;
+
+		if (GetCurrentForegroundProcessName(&process_name) == true){
+			blog(LOG_INFO, "Foreground process name: %s",
+			     process_name.array);
+		}
 
 		if (os_atomic_load_bool(&obs_hadowplay_manual_start) == false) {
 			obs_source_t *scene_source =
