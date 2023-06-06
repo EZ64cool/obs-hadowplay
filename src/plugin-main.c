@@ -60,6 +60,7 @@ bool obs_hadowplay_manual_stop = false;
 bool obs_hadowplay_module_loaded = false;
 
 extern bool GetCurrentForegroundProcessName(struct dstr* process_name);
+extern bool obs_EnumWindows(struct dstr *process_name);
 
 void *obs_hadowplay_update(void *param)
 {
@@ -72,8 +73,9 @@ void *obs_hadowplay_update(void *param)
 	while (os_atomic_load_bool(&obs_hadowplay_module_loaded) == true) {
 
 		struct dstr process_name;
+		dstr_init(&process_name);
 
-		if (GetCurrentForegroundProcessName(&process_name) == true){
+		if (obs_EnumWindows(&process_name) == true) {
 			blog(LOG_INFO, "Foreground process name: %s",
 			     process_name.array);
 		}
