@@ -53,57 +53,19 @@ bool GetWindowName(HWND window, struct dstr *process_name)
 	return true;
 }
 
-bool GetCurrentForegroundProcessName(struct dstr *process_name)
-{
-	dstr_init(process_name);
-
-	HWND foreground_window = GetForegroundWindow();
-
-	if (foreground_window == NULL) {
-		dstr_cat(process_name, "None");
-		return false;
-	}
-
-	struct dstr temp;
-	dstr_init(&temp);
-
-	GetWindowName(foreground_window, &temp);
-
-	dstr_cat(process_name, temp.array);
-
-	HWND next_window = GetNextWindow(foreground_window, GW_HWNDNEXT);
-
-	int count = 0;
-
-	while (next_window != NULL && count < 10) {
-		count++;
-
-
-		GetWindowName(next_window, &temp);
-
-		dstr_cat(process_name, ":");
-
-		dstr_cat_dstr(process_name, &temp);
-
-		next_window = GetNextWindow(next_window, GW_HWNDNEXT);
-	}
-
-	dstr_free(&temp);
-
-	return true;
-}
-
-static const char *exclusions[] = {"explorer", "obs", "discord"};
+static const char *exclusions[] = {"explorer", "obs",           "discord",
+				   "chrome",   "TextInputHost", "NVIDIA Share",
+				   "Plex"};
 
 BOOL EnumWindowsProc(HWND window, LPARAM param)
 {
 	struct dstr *str = (struct dstr *)param;
 
-	if (IsWindowVisible(window) == 0)
+	if (IsWindowVisible(window) == false)
 		return true;
 
 	RECT window_rect = {0};
-	if (GetWindowRect(window, &window_rect) == 0) {
+	if (GetWindowRect(window, &window_rect) == false) {
 		return true;
 	}
 
@@ -116,45 +78,47 @@ BOOL EnumWindowsProc(HWND window, LPARAM param)
 	MONITORINFO monitor_info = {0};
 	monitor_info.cbSize = sizeof(MONITORINFO);
 
-	if (GetMonitorInfo(monitor, &monitor_info) == 0) {
+	if (GetMonitorInfo(monitor, &monitor_info) == false) {
 		return true;
 	}
 
-	if (monitor_info.rcMonitor.left != window_rect.left || monitor_info.rcMonitor.right != window_rect.right
-		|| monitor_info.rcMonitor.top != window_rect.top || monitor_info.rcMonitor.bottom != window_rect.bottom) {
+	if (monitor_info.rcMonitor.left != window_rect.left ||
+	    monitor_info.rcMonitor.right != window_rect.right ||
+	    monitor_info.rcMonitor.top != window_rect.top ||
+	    monitor_info.rcMonitor.bottom != window_rect.bottom) {
 		return true;
 	}
 
 	struct dstr temp;
 	dstr_init(&temp);
 
+	bool found = false;
+
 	if (GetWindowName(window, &temp) == true) {
 
 		bool excluded = false;
 
-		for (int i = 0; i < sizeof(exclusions) / sizeof(exclusions[0]); ++i)
-		{
-			if (strcmpi(exclusions[i], temp.array) == 0)
-			{
+		for (int i = 0; i < sizeof(exclusions) / sizeof(exclusions[0]);
+		     ++i) {
+			if (strcmpi(exclusions[i], temp.array) == 0) {
 				excluded = true;
+				break;
 			}
 		}
 
 		if (excluded == false) {
 
-			dstr_cat(str, "\\");
-			dstr_cat_dstr(str, &temp);
+			dstr_copy_dstr(str, &temp);
+			found = true;
 		}
 	}
 
 	dstr_free(&temp);
 
-	return 1;
+	return !found;
 }
 
-bool obs_EnumWindows(struct dstr* process_name)
+extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
 {
-	EnumWindows(EnumWindowsProc, (LPARAM)process_name);
-
-	return true;
+	return !EnumWindows(EnumWindowsProc, (LPARAM)process_name);
 }

@@ -59,8 +59,7 @@ bool obs_hadowplay_manual_start = false;
 bool obs_hadowplay_manual_stop = false;
 bool obs_hadowplay_module_loaded = false;
 
-extern bool GetCurrentForegroundProcessName(struct dstr* process_name);
-extern bool obs_EnumWindows(struct dstr *process_name);
+extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name);
 
 void *obs_hadowplay_update(void *param)
 {
@@ -75,7 +74,8 @@ void *obs_hadowplay_update(void *param)
 		struct dstr process_name;
 		dstr_init(&process_name);
 
-		if (obs_EnumWindows(&process_name) == true) {
+		if (obs_hadowplay_get_fullscreen_window_name(&process_name) ==
+			    true) {
 			blog(LOG_INFO, "Foreground process name: %s",
 			     process_name.array);
 		}
