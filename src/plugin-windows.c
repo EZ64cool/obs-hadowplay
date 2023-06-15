@@ -53,9 +53,30 @@ bool GetWindowName(HWND window, struct dstr *process_name)
 	return true;
 }
 
-static const char *exclusions[] = {"explorer", "obs",           "discord",
-				   "chrome",   "TextInputHost", "NVIDIA Share",
-				   "Plex"};
+static const char *exclusions[] = {
+	"explorer",
+	"steam",
+	"battle.net",
+	"galaxyclient",
+	"skype",
+	"uplay",
+	"origin",
+	"devenv",
+	"taskmgr",
+	"chrome",
+	"discord",
+	"firefox",
+	"systemsettings",
+	"applicationframehost",
+	"cmd",
+	"shellexperiencehost",
+	"searchui",
+	"lockapp",
+	"obs",
+	"TextInputHost",
+	"NVIDIA Share",
+	"Plex"
+};
 
 BOOL EnumWindowsProc(HWND window, LPARAM param)
 {
@@ -98,9 +119,9 @@ BOOL EnumWindowsProc(HWND window, LPARAM param)
 
 		bool excluded = false;
 
-		for (int i = 0; i < sizeof(exclusions) / sizeof(exclusions[0]);
-		     ++i) {
-			if (strcmpi(exclusions[i], temp.array) == 0) {
+		for (const char **vals = exclusions; *vals; vals++)
+		{
+			if (strcmpi(*vals, temp.array) == 0) {
 				excluded = true;
 				break;
 			}
