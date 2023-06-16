@@ -29,6 +29,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
+extern const char *dstr_find_last(struct dstr *src, char c);
+
 void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 				       obs_source_t *source, void *param)
 {
@@ -75,7 +77,7 @@ void *obs_hadowplay_update(void *param)
 		dstr_init(&process_name);
 
 		if (obs_hadowplay_get_fullscreen_window_name(&process_name) ==
-			    true) {
+		    true) {
 			blog(LOG_INFO, "Foreground process name: %s",
 			     process_name.array);
 		}
@@ -138,6 +140,7 @@ void *obs_hadowplay_update(void *param)
 }
 
 pthread_t update_thread;
+struct dstr replay_target_name = {0};
 
 void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 					   void *private_data)
@@ -162,11 +165,59 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		os_atomic_store_bool(&obs_hadowplay_is_replay_controlled,
 				     false);
 		os_atomic_store_bool(&obs_hadowplay_manual_start, false);
+
+		if (dstr_is_empty(&replay_target_name) == true) {
+			obs_hadowplay_get_fullscreen_window_name(
+				&replay_target_name);
+		}
 	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED) {
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    false) {
 			os_atomic_store_bool(&obs_hadowplay_manual_start, true);
 		}
+
+		obs_hadowplay_get_fullscreen_window_name(&replay_target_name);
+	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED) {
+		if (dstr_is_empty(&replay_target_name) == true)
+		{
+			return;
+		}
+
+		struct dstr replay_path = {0};
+		dstr_init_copy(&replay_path, obs_frontend_get_last_replay());
+
+		const char *dir_start = strrchr(replay_path.array, '/');
+
+		struct dstr replay_filename = {0};
+		dstr_init_copy(&replay_filename, dir_start + 1);
+
+		struct dstr replay_dir = {0};
+		dstr_init(&replay_dir);
+
+		dstr_ncopy_dstr(&replay_dir, &replay_path,
+				(dir_start + 1) - replay_path.array);
+
+		dstr_cat_dstr(&replay_dir, &replay_target_name);
+		dstr_cat(&replay_dir, "/");
+
+		if (os_file_exists(replay_dir.array) == false) {
+			blog(LOG_INFO, "Making directory: %s",
+			     replay_dir.array);
+			os_mkdir(replay_dir.array);
+		}
+
+		struct dstr new_replay_path = {0};
+		dstr_init_copy_dstr(&new_replay_path, &replay_dir);
+		dstr_cat_dstr(&new_replay_path, &replay_filename);
+
+		blog(LOG_INFO, "Renaming files: %s -> %s", replay_path.array,
+		     new_replay_path.array);
+		os_rename(replay_path.array, new_replay_path.array);
+
+		dstr_free(&replay_path);
+		dstr_free(&replay_filename);
+		dstr_free(&replay_dir);
+		dstr_free(&new_replay_path);
 	}
 }
 

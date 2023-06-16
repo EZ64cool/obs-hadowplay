@@ -75,7 +75,7 @@ static const char *exclusions[] = {
 	"obs",
 	"TextInputHost",
 	"NVIDIA Share",
-	"Plex"
+	//"Plex"
 };
 
 BOOL EnumWindowsProc(HWND window, LPARAM param)
