@@ -165,11 +165,6 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		os_atomic_store_bool(&obs_hadowplay_is_replay_controlled,
 				     false);
 		os_atomic_store_bool(&obs_hadowplay_manual_start, false);
-
-		if (dstr_is_empty(&replay_target_name) == true) {
-			obs_hadowplay_get_fullscreen_window_name(
-				&replay_target_name);
-		}
 	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED) {
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    false) {
@@ -178,6 +173,11 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		obs_hadowplay_get_fullscreen_window_name(&replay_target_name);
 	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED) {
+		if (dstr_is_empty(&replay_target_name) == true) {
+			obs_hadowplay_get_fullscreen_window_name(
+				&replay_target_name);
+		}
+
 		if (dstr_is_empty(&replay_target_name) == true)
 		{
 			return;
