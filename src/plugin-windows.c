@@ -4,53 +4,145 @@
 
 #include <Windows.h>
 #include <WinUser.h>
+#include <winver.h>
 #include <Psapi.h>
+
+#include "plugin-macros.generated.h"
 
 extern const char *dstr_find_last(struct dstr *src, char c);
 
-bool GetWindowName(HWND window, struct dstr *process_name)
+
+#define SZ_STRING_FILE_INFO_W L"StringFileInfo"
+#define SZ_PRODUCT_NAME_W L"ProductName"
+#define SZ_HEX_LANG_ID_EN_GB_W L"0809"
+#define SZ_HEX_CODE_PAGE_ID_UNICODE_W L"04E4"
+
+#define test L"\\" SZ_STRING_FILE_INFO_W L"\\" SZ_HEX_LANG_ID_EN_US_W SZ_HEX_CODE_PAGE_ID_UNICODE_W L"\\" SZ_PRODUCT_NAME_W
+
+bool GetProductName(const wchar_t* filepath, struct dstr* product_name)
+{
+	DWORD file_version_info_size =
+		GetFileVersionInfoSizeExW(FILE_VER_GET_LOCALISED, filepath, NULL);
+
+	if (file_version_info_size == 0)
+	{
+		return false;
+	}
+
+	LPVOID buffer = bmalloc(file_version_info_size);
+
+	if (GetFileVersionInfoExW(FILE_VER_GET_LOCALISED, filepath, 0,
+		file_version_info_size, buffer) == FALSE)
+	{
+		bfree(buffer);
+		return false;
+	}
+
+	struct LANGANDCODEPAGE {
+		WORD wLanguage;
+		WORD wCodePage;
+	} *lpTranslate;
+	UINT cbTranslate;
+
+	if (VerQueryValueW(buffer, L"\\VarFileInfo\\Translation",
+		(LPVOID*)&lpTranslate, &cbTranslate) == FALSE || cbTranslate == 0)
+	{
+		bfree(buffer);
+		return false;
+	}
+
+	LANGID language_id = GetUserDefaultUILanguage();
+	wchar_t *key = bmalloc(50);
+
+	bool set = false;
+
+	for (int i = 0; i < (cbTranslate / sizeof(struct LANGANDCODEPAGE)); i++) {
+		if (lpTranslate[i].wLanguage == language_id)
+		{
+			wsprintfW(key,
+				  L"\\StringFileInfo\\%04x%04x\\ProductName",
+				  language_id, lpTranslate[i].wCodePage);
+			set = true;
+			break;
+		}
+	}
+
+	if (set == false)
+	{
+		wsprintfW(key, L"\\StringFileInfo\\%04x%04x\\ProductName",
+			  lpTranslate[0].wLanguage, lpTranslate[0].wCodePage);
+	}
+
+	wchar_t *value;
+	UINT value_length;
+
+	if (VerQueryValueW(buffer, key, &value, &value_length) == FALSE || value == NULL)
+	{
+		bfree(buffer);
+		return false;
+	}
+
+	bfree(buffer);
+
+	dstr_from_wcs(product_name, value);
+
+	return true;
+}
+
+bool GetWindowFilepath(HWND window, struct dstr* process_filepath)
 {
 	wchar_t *buffer = bmalloc(MAX_PATH * sizeof(wchar_t));
 
-	if (buffer == NULL)
+	if (buffer == NULL) {
+		bfree(buffer);
 		return false;
+	}
 
 	DWORD dwProcId = 0;
-	if (GetWindowThreadProcessId(window, &dwProcId) == 0)
+	if (GetWindowThreadProcessId(window, &dwProcId) == 0) {
+		bfree(buffer);
 		return false;
+	}
 
 	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
 				   FALSE, dwProcId);
 
-	if (GetProcessImageFileName(hProc, buffer, MAX_PATH) == 0) {
+	DWORD filepath_length = MAX_PATH;
+	//if (GetProcessImageFileName(hProc, buffer, MAX_PATH) == 0) {
+	if (QueryFullProcessImageNameW(hProc, 0, buffer, &filepath_length) ==
+	    0) {
 		CloseHandle(hProc);
+		bfree(buffer);
 		return false;
 	}
 	CloseHandle(hProc);
 
-	struct dstr process_path;
-	dstr_init(&process_path);
-
-	dstr_from_wcs(&process_path, buffer);
-
-	const char *filename_start = dstr_find_last(&process_path, '\\') + 1;
-
-	const char *filename_end = strchr(filename_start, '.');
-
-	if (filename_start != NULL && filename_end != NULL) {
-		size_t start = (filename_start - process_path.array);
-		size_t count = (filename_end - filename_start);
-
-		dstr_mid(process_name, &process_path, start, count);
-	} else {
-		dstr_copy_dstr(process_name, &process_path);
-	}
-
-	dstr_free(&process_path);
+	dstr_from_wcs(process_filepath, buffer);
 
 	bfree(buffer);
 
 	return true;
+}
+
+struct dstr *GetFileName(struct dstr *filepath)
+{
+	const char *filename_start = dstr_find_last(filepath, '\\') + 1;
+
+	const char *filename_end = strchr(filename_start, '.');
+
+	struct dstr *filename = bmalloc(sizeof(struct dstr));
+	dstr_init(filename);
+
+	if (filename_start != NULL && filename_end != NULL) {
+		size_t start = (filename_start - filepath->array);
+		size_t count = (filename_end - filename_start);
+
+		dstr_mid(filename, filepath, start, count);
+	} else {
+		dstr_copy_dstr(filename, filepath);
+	}
+
+	return filename;
 }
 
 static const char *exclusions[] = {
@@ -75,7 +167,6 @@ static const char *exclusions[] = {
 	"obs",
 	"TextInputHost",
 	"NVIDIA Share",
-	//"Plex"
 };
 
 BOOL EnumWindowsProc(HWND window, LPARAM param)
@@ -110,18 +201,25 @@ BOOL EnumWindowsProc(HWND window, LPARAM param)
 		return true;
 	}
 
-	struct dstr temp;
-	dstr_init(&temp);
+	struct dstr filepath;
+	dstr_init(&filepath);
 
 	bool found = false;
 
-	if (GetWindowName(window, &temp) == true) {
+	if (GetWindowFilepath(window, &filepath) == true) {
+
+		struct dstr *filename = GetFileName(&filepath);
+
+		struct dstr productName;
+		dstr_init(&productName);
+
+		GetProductName(dstr_to_wcs(&filepath), &productName);
 
 		bool excluded = false;
 
 		for (const char **vals = exclusions; *vals; vals++)
 		{
-			if (strcmpi(*vals, temp.array) == 0) {
+			if (strcmpi(*vals, filename->array) == 0) {
 				excluded = true;
 				break;
 			}
@@ -129,12 +227,19 @@ BOOL EnumWindowsProc(HWND window, LPARAM param)
 
 		if (excluded == false) {
 
-			dstr_copy_dstr(str, &temp);
+			if (dstr_is_empty(&productName) == false)
+			{
+				dstr_copy_dstr(str, &productName);
+			} else {
+				dstr_copy_dstr(str, filename);
+			}
 			found = true;
 		}
+
+		dstr_free(filename);
 	}
 
-	dstr_free(&temp);
+	dstr_free(&filepath);
 
 	return !found;
 }
