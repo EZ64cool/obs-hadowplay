@@ -1,16 +1,19 @@
 #include <util/dstr.h>
 
-const char *dstr_find_last(struct dstr *src, char c)
+bool dstr_get_filename(struct dstr *filepath, struct dstr *filename)
 {
-	int i = 0;
-	const char *pos = NULL;
-	while (i < src->len) {
-		if (src->array[i] == c) {
-			pos = &src->array[i];
-		}
+	const char *filename_start = strrchr(filepath->array, '\\') + 1;
 
-		i++;
+	const char *filename_end = strrchr(filename_start, '.');
+
+	if (filename_start != NULL && filename_end != NULL) {
+		size_t start = (filename_start - filepath->array);
+		size_t count = (filename_end - filename_start);
+
+		dstr_mid(filename, filepath, start, count);
+	} else {
+		return false;
 	}
 
-	return pos;
+	return true;
 }

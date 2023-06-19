@@ -29,8 +29,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
-extern const char *dstr_find_last(struct dstr *src, char c);
-
 void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 				       obs_source_t *source, void *param)
 {
@@ -72,15 +70,6 @@ void *obs_hadowplay_update(void *param)
 	os_set_thread_name(thread_name);
 
 	while (os_atomic_load_bool(&obs_hadowplay_module_loaded) == true) {
-
-		struct dstr process_name;
-		dstr_init(&process_name);
-
-		if (obs_hadowplay_get_fullscreen_window_name(&process_name) ==
-		    true) {
-			blog(LOG_INFO, "Foreground process name: %s",
-			     process_name.array);
-		}
 
 		if (os_atomic_load_bool(&obs_hadowplay_manual_start) == false) {
 			obs_source_t *scene_source =
@@ -178,20 +167,26 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 				&replay_target_name);
 		}
 
-		if (dstr_is_empty(&replay_target_name) == true)
+		if (dstr_is_empty(&replay_target_name) == true) {
+			return;
+		}
+
+		const char *replay_path_c = obs_frontend_get_last_replay();
+
+		if (replay_path_c == NULL)
 		{
 			return;
 		}
 
-		struct dstr replay_path = {0};
-		dstr_init_copy(&replay_path, obs_frontend_get_last_replay());
+		struct dstr replay_path;
+		dstr_init_copy(&replay_path, replay_path_c);
 
 		const char *dir_start = strrchr(replay_path.array, '/');
 
-		struct dstr replay_filename = {0};
+		struct dstr replay_filename;
 		dstr_init_copy(&replay_filename, dir_start + 1);
 
-		struct dstr replay_dir = {0};
+		struct dstr replay_dir;
 		dstr_init(&replay_dir);
 
 		dstr_ncopy_dstr(&replay_dir, &replay_path,
@@ -201,12 +196,12 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		dstr_cat(&replay_dir, "/");
 
 		if (os_file_exists(replay_dir.array) == false) {
-			blog(LOG_INFO, "Making directory: %s",
+			blog(LOG_INFO, "Creating directory: %s",
 			     replay_dir.array);
 			os_mkdir(replay_dir.array);
 		}
 
-		struct dstr new_replay_path = {0};
+		struct dstr new_replay_path;
 		dstr_init_copy_dstr(&new_replay_path, &replay_dir);
 		dstr_cat_dstr(&new_replay_path, &replay_filename);
 
