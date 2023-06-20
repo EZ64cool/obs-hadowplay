@@ -82,9 +82,18 @@ bool win_get_product_name(const struct dstr *filepath,
 
 	if (VerQueryValueW(buffer, key, &value, &value_length) == FALSE ||
 	    value == NULL || value_length == 0) {
-		bfree(key);
-		bfree(buffer);
-		return false;
+
+		swprintf_s(key, key_length,
+			   L"\\StringFileInfo\\%04x%04x\\ProductName",
+			   language_id, code_page_id);
+
+		if (VerQueryValueW(buffer, key, &value, &value_length) ==
+			    FALSE ||
+		    value == NULL || value_length == 0) {
+			bfree(key);
+			bfree(buffer);
+			return false;
+		}
 	}
 
 	bfree(key);
