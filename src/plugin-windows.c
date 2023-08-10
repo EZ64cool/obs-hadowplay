@@ -42,7 +42,7 @@ bool win_get_product_name(const struct dstr *filepath,
 	struct LANGANDCODEPAGE {
 		WORD wLanguage;
 		WORD wCodePage;
-	} *lpTranslate;
+	} *lpTranslate = 0;
 	UINT cbTranslate = 0;
 
 	if (VerQueryValueW(buffer, L"\\VarFileInfo\\Translation", &lpTranslate,
