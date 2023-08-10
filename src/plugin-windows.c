@@ -82,7 +82,6 @@ bool win_get_product_name(const struct dstr *filepath,
 
 	if (VerQueryValueW(buffer, key, &value, &value_length) == FALSE ||
 	    value == NULL || value_length == 0) {
-
 		swprintf_s(key, key_length,
 			   L"\\StringFileInfo\\%04x%04x\\ProductName",
 			   language_id, code_page_id);
@@ -223,7 +222,6 @@ BOOL win_enum_windows(HWND window, LPARAM param)
 		}
 
 		if (excluded == false) {
-
 			if (dstr_is_empty(&product_name) == false) {
 				dstr_copy_dstr(str, &product_name);
 			} else {
