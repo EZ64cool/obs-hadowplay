@@ -21,6 +21,7 @@ set(LINUX_MAINTAINER_EMAIL "")
 
 # Add your custom source files here - header files are optional and only required for visibility
 # e.g. in Xcode or Visual Studio
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-platform-helpers.c)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.c)
 
 # Import libobs as main plugin dependency
@@ -58,11 +59,14 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
 # --- Windows-specific build settings and tasks ---
 if(OS_WINDOWS)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-windows.c)
+
   configure_file(cmake/bundle/windows/installer-Windows.iss.in
                  ${CMAKE_BINARY_DIR}/installer-Windows.generated.iss)
 
   configure_file(cmake/bundle/windows/resource.rc.in ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.rc)
   target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.rc)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE version)
 
   if(MSVC)
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4)
@@ -71,6 +75,8 @@ if(OS_WINDOWS)
 
   # -- macOS specific build settings and tasks --
 elseif(OS_MACOS)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macos.c)
+
   configure_file(cmake/bundle/macos/installer-macos.pkgproj.in
                  ${CMAKE_BINARY_DIR}/installer-macos.generated.pkgproj)
 
@@ -83,6 +89,8 @@ elseif(OS_MACOS)
 
   # --- Linux-specific build settings and tasks ---
 else()
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-linux.c)
+
   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
 endif()
 # --- End of section ---

@@ -22,6 +22,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-source.h>
 #include <util/platform.h>
 #include <util/threading.h>
+#include <util/dstr.h>
 
 #include "plugin-macros.generated.h"
 
@@ -57,6 +58,8 @@ bool obs_hadowplay_is_replay_controlled = false;
 bool obs_hadowplay_manual_start = false;
 bool obs_hadowplay_manual_stop = false;
 bool obs_hadowplay_module_loaded = false;
+
+extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name);
 
 void *obs_hadowplay_update(void *param)
 {
@@ -126,6 +129,7 @@ void *obs_hadowplay_update(void *param)
 }
 
 pthread_t update_thread;
+struct dstr replay_target_name = {0};
 
 void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 					   void *private_data)
@@ -155,6 +159,59 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		    false) {
 			os_atomic_store_bool(&obs_hadowplay_manual_start, true);
 		}
+
+		obs_hadowplay_get_fullscreen_window_name(&replay_target_name);
+	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED) {
+		if (dstr_is_empty(&replay_target_name) == true) {
+			obs_hadowplay_get_fullscreen_window_name(
+				&replay_target_name);
+		}
+
+		if (dstr_is_empty(&replay_target_name) == true) {
+			return;
+		}
+
+		const char *replay_path_c = obs_frontend_get_last_replay();
+
+		if (replay_path_c == NULL) {
+			return;
+		}
+
+		struct dstr replay_path;
+		dstr_init_copy(&replay_path, replay_path_c);
+
+		const char *dir_start = strrchr(replay_path.array, '/');
+
+		struct dstr replay_filename;
+		dstr_init_copy(&replay_filename, dir_start + 1);
+
+		struct dstr replay_dir;
+		dstr_init(&replay_dir);
+
+		dstr_ncopy_dstr(&replay_dir, &replay_path,
+				(dir_start + 1) - replay_path.array);
+
+		dstr_cat_dstr(&replay_dir, &replay_target_name);
+		dstr_cat(&replay_dir, "/");
+
+		if (os_file_exists(replay_dir.array) == false) {
+			blog(LOG_INFO, "Creating directory: %s",
+			     replay_dir.array);
+			os_mkdir(replay_dir.array);
+		}
+
+		struct dstr new_replay_path;
+		dstr_init_copy_dstr(&new_replay_path, &replay_dir);
+		dstr_cat_dstr(&new_replay_path, &replay_filename);
+
+		blog(LOG_INFO, "Renaming files: %s -> %s", replay_path.array,
+		     new_replay_path.array);
+		os_rename(replay_path.array, new_replay_path.array);
+
+		dstr_free(&replay_path);
+		dstr_free(&replay_filename);
+		dstr_free(&replay_dir);
+		dstr_free(&new_replay_path);
 	}
 }
 
