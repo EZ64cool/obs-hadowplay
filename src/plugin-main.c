@@ -173,8 +173,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		const char *replay_path_c = obs_frontend_get_last_replay();
 
-		if (replay_path_c == NULL)
-		{
+		if (replay_path_c == NULL) {
 			return;
 		}
 
