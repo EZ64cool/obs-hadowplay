@@ -162,7 +162,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		obs_hadowplay_get_fullscreen_window_name(&replay_target_name);
 	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED ||
-				event == OBS_FRONTEND_EVENT_RECORDING_STOPPED ) {
+		   event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
 		if (dstr_is_empty(&replay_target_name) == true) {
 			obs_hadowplay_get_fullscreen_window_name(
 				&replay_target_name);
@@ -173,13 +173,10 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		}
 
 		const char *replay_path_c = NULL;
-		
-		if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED)
-		{
+
+		if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
 			replay_path_c = obs_frontend_get_last_recording();
-		}
-		else
-		{
+		} else {
 			replay_path_c = obs_frontend_get_last_replay();
 		}
 
