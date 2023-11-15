@@ -1,4 +1,4 @@
-#include <util/dstr.h>
+#include "plugin-platform-helpers.h"
 
 bool dstr_get_filename(struct dstr *filepath, struct dstr *filename)
 {

@@ -1,5 +1,6 @@
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || defined(__TOS_WIN__)
+
 #include <util/bmem.h>
-#include <util/dstr.h>
 #include <util/platform.h>
 
 #include <Windows.h>
@@ -7,7 +8,7 @@
 #include <winver.h>
 #include <Psapi.h>
 
-extern bool dstr_get_filename(struct dstr *filepath, struct dstr *filename);
+#include "plugin-platform-helpers.h"
 
 bool win_get_product_name(const struct dstr *filepath,
 			  struct dstr *product_name)
@@ -242,3 +243,5 @@ extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
 {
 	return !EnumWindows(win_enum_windows, (LPARAM)process_name);
 }
+
+#endif
