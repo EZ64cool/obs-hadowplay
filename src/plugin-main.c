@@ -22,9 +22,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-source.h>
 #include <util/platform.h>
 #include <util/threading.h>
+#include <util/dstr.h>
 
 #include "plugin-support.h"
-#include "plugin-platform-helpers.h"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")

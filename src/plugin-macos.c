@@ -1,6 +1,6 @@
 #if defined(__APPLE__) || defined(__APPLE_CC__) || defined(__OSX__)
 
-#include "plugin-platform-helpers.h"
+#include <util/dstr.h>
 
 extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
 {

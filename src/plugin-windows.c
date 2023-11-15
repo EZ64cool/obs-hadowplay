@@ -3,13 +3,14 @@
 
 #include <util/bmem.h>
 #include <util/platform.h>
+#include <util/dstr.h>
 
 #include <Windows.h>
 #include <WinUser.h>
 #include <winver.h>
 #include <Psapi.h>
 
-#include "plugin-platform-helpers.h"
+extern bool dstr_get_filename(struct dstr *filepath, struct dstr *filename);
 
 bool win_get_product_name(const struct dstr *filepath,
 			  struct dstr *product_name)
