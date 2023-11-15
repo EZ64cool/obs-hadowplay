@@ -91,13 +91,14 @@ void *obs_hadowplay_update(void *param)
 						obs_source_get_name(
 							game_capture_source);
 					obs_log(LOG_INFO,
-					     "Active game capture found: %s",
-					     source_name);
+						"Active game capture found: %s",
+						source_name);
 					os_atomic_store_bool(
 						&obs_hadowplay_is_replay_controlled,
 						true);
 					obs_frontend_replay_buffer_start();
-					obs_log(LOG_INFO, "Replay buffer started");
+					obs_log(LOG_INFO,
+						"Replay buffer started");
 				}
 
 				obs_source_release(game_capture_source);
@@ -106,7 +107,8 @@ void *obs_hadowplay_update(void *param)
 					   true &&
 				   obs_frontend_replay_buffer_active() ==
 					   true) {
-				obs_log(LOG_INFO, "No active game capture found");
+				obs_log(LOG_INFO,
+					"No active game capture found");
 				obs_frontend_replay_buffer_stop();
 				obs_log(LOG_INFO, "Replay buffer stopped");
 
@@ -141,8 +143,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 					    obs_hadowplay_update, NULL);
 		if (result != 0) {
 			obs_log(LOG_ERROR,
-			     "Failed to create update thread (code %d), plugin is no longer able to track when to toggle the replay buffer",
-			     result);
+				"Failed to create update thread (code %d), plugin is no longer able to track when to toggle the replay buffer",
+				result);
 		}
 	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED) {
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
@@ -196,7 +198,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		if (os_file_exists(replay_dir.array) == false) {
 			obs_log(LOG_INFO, "Creating directory: %s",
-			     replay_dir.array);
+				replay_dir.array);
 			os_mkdir(replay_dir.array);
 		}
 
@@ -205,7 +207,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		dstr_cat_dstr(&new_replay_path, &replay_filename);
 
 		obs_log(LOG_INFO, "Renaming files: %s -> %s", replay_path.array,
-		     new_replay_path.array);
+			new_replay_path.array);
 		os_rename(replay_path.array, new_replay_path.array);
 
 		dstr_free(&replay_path);
@@ -224,7 +226,7 @@ bool obs_module_load(void)
 					NULL);
 
 	obs_log(LOG_INFO, "plugin loaded successfully (version %s)",
-	     PLUGIN_VERSION);
+		PLUGIN_VERSION);
 
 	return true;
 }

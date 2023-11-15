@@ -1,4 +1,5 @@
-#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || defined(__TOS_WIN__)
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || \
+	defined(__TOS_WIN__)
 
 #include <util/bmem.h>
 #include <util/platform.h>
