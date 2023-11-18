@@ -48,7 +48,7 @@ runs:
   using: composite
   steps:
     - name: Run macOS Packaging
-      if: runner.os == 'macOS' && false
+      if: runner.os == 'macOS'
       shell: zsh --no-rcs --errexit --pipefail {0}
       working-directory: ${{ inputs.workingDirectory }}
       env:
