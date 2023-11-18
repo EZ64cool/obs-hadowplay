@@ -1,6 +1,9 @@
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || \
+	defined(__TOS_WIN__)
+
 #include <util/bmem.h>
-#include <util/dstr.h>
 #include <util/platform.h>
+#include <util/dstr.h>
 
 #include <Windows.h>
 #include <WinUser.h>
@@ -242,3 +245,5 @@ extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
 {
 	return !EnumWindows(win_enum_windows, (LPARAM)process_name);
 }
+
+#endif
