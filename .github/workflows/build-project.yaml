@@ -58,6 +58,7 @@ jobs:
           echo "commitHash=${GITHUB_SHA:0:9}" >> $GITHUB_OUTPUT
 
   macos-build:
+    if: false
     name: Build for macOS 🍏
     runs-on: macos-13
     needs: check-event
