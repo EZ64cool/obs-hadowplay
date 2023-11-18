@@ -24,7 +24,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/threading.h>
 #include <util/dstr.h>
 
-#include "plugin-macros.generated.h"
+#include "plugin-support.h"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
@@ -90,14 +90,15 @@ void *obs_hadowplay_update(void *param)
 					const char *source_name =
 						obs_source_get_name(
 							game_capture_source);
-					blog(LOG_INFO,
-					     "Active game capture found: %s",
-					     source_name);
+					obs_log(LOG_INFO,
+						"Active game capture found: %s",
+						source_name);
 					os_atomic_store_bool(
 						&obs_hadowplay_is_replay_controlled,
 						true);
 					obs_frontend_replay_buffer_start();
-					blog(LOG_INFO, "Replay buffer started");
+					obs_log(LOG_INFO,
+						"Replay buffer started");
 				}
 
 				obs_source_release(game_capture_source);
@@ -106,9 +107,10 @@ void *obs_hadowplay_update(void *param)
 					   true &&
 				   obs_frontend_replay_buffer_active() ==
 					   true) {
-				blog(LOG_INFO, "No active game capture found");
+				obs_log(LOG_INFO,
+					"No active game capture found");
 				obs_frontend_replay_buffer_stop();
-				blog(LOG_INFO, "Replay buffer stopped");
+				obs_log(LOG_INFO, "Replay buffer stopped");
 
 				os_atomic_store_bool(
 					&obs_hadowplay_is_replay_controlled,
@@ -140,14 +142,14 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		int result = pthread_create(&update_thread, NULL,
 					    obs_hadowplay_update, NULL);
 		if (result != 0) {
-			blog(LOG_ERROR,
-			     "Failed to create update thread (code %d), plugin is no longer able to track when to toggle the replay buffer",
-			     result);
+			obs_log(LOG_ERROR,
+				"Failed to create update thread (code %d), plugin is no longer able to track when to toggle the replay buffer",
+				result);
 		}
 	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED) {
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    true) {
-			blog(LOG_INFO, "Replay buffer manually stopped");
+			obs_log(LOG_INFO, "Replay buffer manually stopped");
 			os_atomic_store_bool(&obs_hadowplay_manual_stop, true);
 		}
 
@@ -195,8 +197,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		dstr_cat(&replay_dir, "/");
 
 		if (os_file_exists(replay_dir.array) == false) {
-			blog(LOG_INFO, "Creating directory: %s",
-			     replay_dir.array);
+			obs_log(LOG_INFO, "Creating directory: %s",
+				replay_dir.array);
 			os_mkdir(replay_dir.array);
 		}
 
@@ -204,8 +206,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		dstr_init_copy_dstr(&new_replay_path, &replay_dir);
 		dstr_cat_dstr(&new_replay_path, &replay_filename);
 
-		blog(LOG_INFO, "Renaming files: %s -> %s", replay_path.array,
-		     new_replay_path.array);
+		obs_log(LOG_INFO, "Renaming files: %s -> %s", replay_path.array,
+			new_replay_path.array);
 		os_rename(replay_path.array, new_replay_path.array);
 
 		dstr_free(&replay_path);
@@ -223,8 +225,8 @@ bool obs_module_load(void)
 	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
 					NULL);
 
-	blog(LOG_INFO, "plugin loaded successfully (version %s)",
-	     PLUGIN_VERSION);
+	obs_log(LOG_INFO, "plugin loaded successfully (version %s)",
+		PLUGIN_VERSION);
 
 	return true;
 }
@@ -233,14 +235,14 @@ void obs_module_unload()
 {
 	os_atomic_store_bool(&obs_hadowplay_module_loaded, false);
 
-	blog(LOG_INFO, "Awaiting update thread closure");
+	obs_log(LOG_INFO, "Awaiting update thread closure");
 	void *return_val = NULL;
 	int result = pthread_join(update_thread, &return_val);
 	if (result == 0) {
-		blog(LOG_INFO, "Update thread closed");
+		obs_log(LOG_INFO, "Update thread closed");
 	} else {
-		blog(LOG_ERROR, "Failed to join update thread: %d", result);
+		obs_log(LOG_ERROR, "Failed to join update thread: %d", result);
 	}
 
-	blog(LOG_INFO, "plugin unloaded");
+	obs_log(LOG_INFO, "plugin unloaded");
 }
