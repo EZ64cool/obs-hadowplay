@@ -61,6 +61,10 @@ bool obs_hadowplay_module_loaded = false;
 
 extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name);
 
+pthread_t update_thread;
+struct dstr replay_target_name = {0};
+struct dstr recording_target_name = {0};
+
 void *obs_hadowplay_update(void *param)
 {
 	UNUSED_PARAMETER(param);
@@ -124,21 +128,72 @@ void *obs_hadowplay_update(void *param)
 			obs_source_release(scene_source);
 		}
 
+		if (obs_frontend_replay_buffer_active() == true &&
+		    dstr_is_empty(&replay_target_name)) {
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &replay_target_name) == true) {
+				obs_log(LOG_INFO, "Replay target found: %s",
+					replay_target_name.array);
+			}
+		}
+
+		if (obs_frontend_recording_active() == true &&
+		    dstr_is_empty(&recording_target_name)) {
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &recording_target_name) == true) {
+				obs_log(LOG_INFO, "Recording target found: %s",
+					recording_target_name.array);
+			}
+		}
+
 		os_sleep_ms(1000);
 	}
 
 	return 0;
 }
 
-pthread_t update_thread;
-struct dstr replay_target_name = {0};
+void obs_hadowplay_move_output_file(struct dstr *original_filepath,
+				    struct dstr *target_name)
+{
+	const char *dir_start = strrchr(original_filepath->array, '/');
+
+	struct dstr replay_filename;
+	dstr_init_copy(&replay_filename, dir_start + 1);
+
+	struct dstr file_dir;
+	dstr_init(&file_dir);
+
+	dstr_ncopy_dstr(&file_dir, original_filepath,
+			(dir_start + 1) - original_filepath->array);
+
+	dstr_cat_dstr(&file_dir, target_name);
+	dstr_cat(&file_dir, "/");
+
+	if (os_file_exists(file_dir.array) == false) {
+		obs_log(LOG_INFO, "Creating directory: %s", file_dir.array);
+		os_mkdir(file_dir.array);
+	}
+
+	struct dstr new_filepath;
+	dstr_init_copy_dstr(&new_filepath, &file_dir);
+	dstr_cat_dstr(&new_filepath, &replay_filename);
+
+	obs_log(LOG_INFO, "Renaming files: %s -> %s", original_filepath->array,
+		new_filepath.array);
+	os_rename(original_filepath->array, new_filepath.array);
+
+	dstr_free(&replay_filename);
+	dstr_free(&file_dir);
+	dstr_free(&new_filepath);
+}
 
 void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 					   void *private_data)
 {
 	UNUSED_PARAMETER(private_data);
 
-	if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
+	switch (event) {
+	case OBS_FRONTEND_EVENT_FINISHED_LOADING:
 		int result = pthread_create(&update_thread, NULL,
 					    obs_hadowplay_update, NULL);
 		if (result != 0) {
@@ -146,7 +201,10 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 				"Failed to create update thread (code %d), plugin is no longer able to track when to toggle the replay buffer",
 				result);
 		}
-	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED) {
+		break;
+
+#pragma region Replay events
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED:
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    true) {
 			obs_log(LOG_INFO, "Replay buffer manually stopped");
@@ -156,17 +214,29 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		os_atomic_store_bool(&obs_hadowplay_is_replay_controlled,
 				     false);
 		os_atomic_store_bool(&obs_hadowplay_manual_start, false);
-	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED) {
+		break;
+
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED:
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    false) {
 			os_atomic_store_bool(&obs_hadowplay_manual_start, true);
 		}
 
-		obs_hadowplay_get_fullscreen_window_name(&replay_target_name);
-	} else if (event == OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED) {
+		dstr_init(&replay_target_name);
+		if (obs_hadowplay_get_fullscreen_window_name(
+			    &replay_target_name) == true) {
+			obs_log(LOG_INFO, "Replay target found: %s",
+				replay_target_name.array);
+		}
+		break;
+
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED:
 		if (dstr_is_empty(&replay_target_name) == true) {
-			obs_hadowplay_get_fullscreen_window_name(
-				&replay_target_name);
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &replay_target_name) == true) {
+				obs_log(LOG_INFO, "Replay target found: %s",
+					replay_target_name.array);
+			}
 		}
 
 		if (dstr_is_empty(&replay_target_name) == true) {
@@ -182,38 +252,54 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		struct dstr replay_path;
 		dstr_init_copy(&replay_path, replay_path_c);
 
-		const char *dir_start = strrchr(replay_path.array, '/');
-
-		struct dstr replay_filename;
-		dstr_init_copy(&replay_filename, dir_start + 1);
-
-		struct dstr replay_dir;
-		dstr_init(&replay_dir);
-
-		dstr_ncopy_dstr(&replay_dir, &replay_path,
-				(dir_start + 1) - replay_path.array);
-
-		dstr_cat_dstr(&replay_dir, &replay_target_name);
-		dstr_cat(&replay_dir, "/");
-
-		if (os_file_exists(replay_dir.array) == false) {
-			obs_log(LOG_INFO, "Creating directory: %s",
-				replay_dir.array);
-			os_mkdir(replay_dir.array);
-		}
-
-		struct dstr new_replay_path;
-		dstr_init_copy_dstr(&new_replay_path, &replay_dir);
-		dstr_cat_dstr(&new_replay_path, &replay_filename);
-
-		obs_log(LOG_INFO, "Renaming files: %s -> %s", replay_path.array,
-			new_replay_path.array);
-		os_rename(replay_path.array, new_replay_path.array);
+		obs_hadowplay_move_output_file(&replay_path,
+					       &replay_target_name);
 
 		dstr_free(&replay_path);
-		dstr_free(&replay_filename);
-		dstr_free(&replay_dir);
-		dstr_free(&new_replay_path);
+		break;
+#pragma endregion Replay buffer events
+
+#pragma region Recording events
+	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
+		// Reset recording name for fresh recordings
+		dstr_init(&recording_target_name);
+		if (obs_hadowplay_get_fullscreen_window_name(
+			    &recording_target_name) == true) {
+			obs_log(LOG_INFO, "Recording target found: %s",
+				recording_target_name.array);
+		}
+		break;
+
+	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
+		if (dstr_is_empty(&recording_target_name) == true) {
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &recording_target_name) == true) {
+				obs_log(LOG_INFO, "Recording target found: %s",
+					recording_target_name.array);
+			}
+		}
+
+		if (dstr_is_empty(&recording_target_name) == true) {
+			return;
+		}
+
+		const char *recording_path_c =
+			obs_frontend_get_last_recording();
+
+		if (recording_path_c == NULL) {
+			return;
+		}
+
+		struct dstr recording_path;
+		dstr_init_copy(&recording_path, recording_path_c);
+
+		obs_hadowplay_move_output_file(&recording_path,
+					       &recording_target_name);
+
+		dstr_free(&recording_path);
+		break;
+
+#pragma endregion Recording events
 	}
 }
 
