@@ -128,6 +128,12 @@ void *obs_hadowplay_update(void *param)
 			obs_source_release(scene_source);
 		}
 
+		if (dstr_is_empty(&replay_target_name) &&
+		    obs_frontend_replay_buffer_active() == true) {
+			obs_hadowplay_get_fullscreen_window_name(
+				&replay_target_name);
+		}
+
 		if (dstr_is_empty(&recording_target_name) &&
 		    obs_frontend_recording_active() == true) {
 			obs_hadowplay_get_fullscreen_window_name(
