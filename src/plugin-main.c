@@ -132,7 +132,7 @@ void *obs_hadowplay_update(void *param)
 		    dstr_is_empty(&replay_target_name)) {
 			if (obs_hadowplay_get_fullscreen_window_name(
 				    &replay_target_name) == true) {
-				obs_log(LOG_INFO, "Replay target found: {0}",
+				obs_log(LOG_INFO, "Replay target found: %s",
 					replay_target_name.array);
 			}
 		}
@@ -141,8 +141,8 @@ void *obs_hadowplay_update(void *param)
 		    dstr_is_empty(&recording_target_name)) {
 			if (obs_hadowplay_get_fullscreen_window_name(
 				    &recording_target_name) == true) {
-				obs_log(LOG_INFO, "Recording target found: {0}",
-					replay_target_name.array);
+				obs_log(LOG_INFO, "Recording target found: %s",
+					recording_target_name.array);
 			}
 		}
 
@@ -225,7 +225,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		dstr_init(&replay_target_name);
 		if (obs_hadowplay_get_fullscreen_window_name(
 			    &replay_target_name) == true) {
-			obs_log(LOG_INFO, "Replay target found: {0}",
+			obs_log(LOG_INFO, "Replay target found: %s",
 				replay_target_name.array);
 		}
 		break;
@@ -234,7 +234,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		if (dstr_is_empty(&replay_target_name) == true) {
 			if (obs_hadowplay_get_fullscreen_window_name(
 				    &replay_target_name) == true) {
-				obs_log(LOG_INFO, "Replay target found: {0}",
+				obs_log(LOG_INFO, "Replay target found: %s",
 					replay_target_name.array);
 			}
 		}
@@ -265,8 +265,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		dstr_init(&recording_target_name);
 		if (obs_hadowplay_get_fullscreen_window_name(
 			    &recording_target_name) == true) {
-			obs_log(LOG_INFO, "Recording target found: {0}",
-				replay_target_name.array);
+			obs_log(LOG_INFO, "Recording target found: %s",
+				recording_target_name.array);
 		}
 		break;
 
@@ -274,8 +274,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		if (dstr_is_empty(&recording_target_name) == true) {
 			if (obs_hadowplay_get_fullscreen_window_name(
 				    &recording_target_name) == true) {
-				obs_log(LOG_INFO, "Recording target found: {0}",
-					replay_target_name.array);
+				obs_log(LOG_INFO, "Recording target found: %s",
+					recording_target_name.array);
 			}
 		}
 
