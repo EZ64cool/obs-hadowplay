@@ -162,6 +162,9 @@ static const char *exclusions[] = {
 	"obs",
 	"TextInputHost",
 	"NVIDIA Share",
+	"vlc",
+	"PotPlayer",
+	"Plex",
 };
 
 BOOL win_enum_windows(HWND window, LPARAM param)
