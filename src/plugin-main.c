@@ -128,16 +128,22 @@ void *obs_hadowplay_update(void *param)
 			obs_source_release(scene_source);
 		}
 
-		if (dstr_is_empty(&replay_target_name) &&
-		    obs_frontend_replay_buffer_active() == true) {
-			obs_hadowplay_get_fullscreen_window_name(
-				&replay_target_name);
+		if (obs_frontend_replay_buffer_active() == true &&
+		    dstr_is_empty(&replay_target_name)) {
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &replay_target_name) == true) {
+				obs_log(LOG_INFO, "Replay target found: {0}",
+					replay_target_name.array);
+			}
 		}
 
-		if (dstr_is_empty(&recording_target_name) &&
-		    obs_frontend_recording_active() == true) {
-			obs_hadowplay_get_fullscreen_window_name(
-				&recording_target_name);
+		if (obs_frontend_recording_active() == true &&
+		    dstr_is_empty(&recording_target_name)) {
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &recording_target_name) == true) {
+				obs_log(LOG_INFO, "Recording target found: {0}",
+					replay_target_name.array);
+			}
 		}
 
 		os_sleep_ms(1000);
@@ -217,13 +223,20 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		}
 
 		dstr_init(&replay_target_name);
-		obs_hadowplay_get_fullscreen_window_name(&replay_target_name);
+		if (obs_hadowplay_get_fullscreen_window_name(
+			    &replay_target_name) == true) {
+			obs_log(LOG_INFO, "Replay target found: {0}",
+				replay_target_name.array);
+		}
 		break;
 
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED:
 		if (dstr_is_empty(&replay_target_name) == true) {
-			obs_hadowplay_get_fullscreen_window_name(
-				&replay_target_name);
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &replay_target_name) == true) {
+				obs_log(LOG_INFO, "Replay target found: {0}",
+					replay_target_name.array);
+			}
 		}
 
 		if (dstr_is_empty(&replay_target_name) == true) {
@@ -250,14 +263,20 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
 		// Reset recording name for fresh recordings
 		dstr_init(&recording_target_name);
-		obs_hadowplay_get_fullscreen_window_name(
-			&recording_target_name);
+		if (obs_hadowplay_get_fullscreen_window_name(
+			    &recording_target_name) == true) {
+			obs_log(LOG_INFO, "Recording target found: {0}",
+				replay_target_name.array);
+		}
 		break;
 
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
 		if (dstr_is_empty(&recording_target_name) == true) {
-			obs_hadowplay_get_fullscreen_window_name(
-				&recording_target_name);
+			if (obs_hadowplay_get_fullscreen_window_name(
+				    &recording_target_name) == true) {
+				obs_log(LOG_INFO, "Recording target found: {0}",
+					replay_target_name.array);
+			}
 		}
 
 		if (dstr_is_empty(&recording_target_name) == true) {
