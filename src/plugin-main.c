@@ -75,7 +75,11 @@ void *obs_hadowplay_update(void *param)
 
 	while (os_atomic_load_bool(&obs_hadowplay_module_loaded) == true) {
 
-		if (os_atomic_load_bool(&obs_hadowplay_manual_start) == false) {
+		obs_output_t *replay_output = obs_frontend_get_replay_buffer_output();
+
+		if (replay_output != NULL && os_atomic_load_bool(&obs_hadowplay_manual_start) == false) {
+			obs_output_release(replay_output);
+
 			obs_source_t *scene_source =
 				obs_frontend_get_current_scene();
 
