@@ -39,7 +39,7 @@ function Package {
 
     $UtilityFunctions = Get-ChildItem -Path $PSScriptRoot/utils.pwsh/*.ps1 -Recurse
 
-    foreach( $Utility in $UtilityFunctions ) {
+    foreach ( $Utility in $UtilityFunctions ) {
         Write-Debug "Loading $($Utility.FullName)"
         . $Utility.FullName
     }
@@ -56,7 +56,7 @@ function Package {
 
     $RemoveArgs = @{
         ErrorAction = 'SilentlyContinue'
-        Path = @(
+        Path        = @(
             "${ProjectRoot}/release/${ProductName}-*-windows-*.zip"
             "${ProjectRoot}/release/${ProductName}-*-windows-*.exe"
         )
@@ -79,17 +79,18 @@ function Package {
         Invoke-External iscc ${IsccFile} /O"${ProjectRoot}/release" /F"${OutputName}-Installer"
         Remove-Item -Path Package -Recurse
         Pop-Location -Stack BuildTemp
-    } else {
-        Log-Group "Archiving ${ProductName}..."
-        $CompressArgs = @{
-            Path = (Get-ChildItem -Path "${ProjectRoot}/release/${Configuration}" -Exclude "${OutputName}*.*")
-            CompressionLevel = 'Optimal'
-            DestinationPath = "${ProjectRoot}/release/${OutputName}.zip"
-            Verbose = ($Env:CI -ne $null)
-        }
-
-        Compress-Archive -Force @CompressArgs
     }
+
+    Log-Group "Archiving ${ProductName}..."
+    $CompressArgs = @{
+        Path             = (Get-ChildItem -Path "${ProjectRoot}/release/${Configuration}" -Exclude "${OutputName}*.*")
+        CompressionLevel = 'Optimal'
+        DestinationPath  = "${ProjectRoot}/release/${OutputName}.zip"
+        Verbose          = ($Env:CI -ne $null)
+    }
+
+    Compress-Archive -Force @CompressArgs
+    
     Log-Group
 }
 
