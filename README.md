@@ -9,7 +9,7 @@ Currently this includes automatic replay buffer start/stop based on a game captu
 I'd love to add the functionality of moving replays into folders named after the game-capture subject, but currently this seems to be an impossabiltiy without changes to obs and it's plugins.
 
 ## Changelog
-* v1.1.2
+* v1.1.3
   * Added automatic recording organisation
 
 * v1.1.1
