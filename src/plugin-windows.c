@@ -165,6 +165,7 @@ static const char *exclusions[] = {
 	"vlc",
 	"PotPlayer",
 	"Plex",
+	NULL,
 };
 
 BOOL win_enum_windows(HWND window, LPARAM param)
