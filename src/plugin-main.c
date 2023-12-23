@@ -306,6 +306,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		break;
 
 #pragma endregion Recording events
+	default:
+		break;
 	}
 }
 
