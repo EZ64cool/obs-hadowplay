@@ -199,7 +199,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	UNUSED_PARAMETER(private_data);
 
 	switch (event) {
-	case OBS_FRONTEND_EVENT_FINISHED_LOADING:
+	case OBS_FRONTEND_EVENT_FINISHED_LOADING: {
 		int result = pthread_create(&update_thread, NULL,
 					    obs_hadowplay_update, NULL);
 		if (result != 0) {
@@ -208,9 +208,10 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 				result);
 		}
 		break;
+	}
 
 #pragma region Replay events
-	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED:
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED: {
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    true) {
 			obs_log(LOG_INFO, "Replay buffer manually stopped");
@@ -221,8 +222,9 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 				     false);
 		os_atomic_store_bool(&obs_hadowplay_manual_start, false);
 		break;
+	}
 
-	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED:
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED: {
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    false) {
 			os_atomic_store_bool(&obs_hadowplay_manual_start, true);
@@ -235,8 +237,9 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 				replay_target_name.array);
 		}
 		break;
+	}
 
-	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED:
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED: {
 		if (dstr_is_empty(&replay_target_name) == true) {
 			if (obs_hadowplay_get_fullscreen_window_name(
 				    &replay_target_name) == true) {
@@ -263,10 +266,11 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		dstr_free(&replay_path);
 		break;
+	}
 #pragma endregion Replay buffer events
 
 #pragma region Recording events
-	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
+	case OBS_FRONTEND_EVENT_RECORDING_STARTED: {
 		// Reset recording name for fresh recordings
 		dstr_init(&recording_target_name);
 		if (obs_hadowplay_get_fullscreen_window_name(
@@ -275,8 +279,9 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 				recording_target_name.array);
 		}
 		break;
+	}
 
-	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
+	case OBS_FRONTEND_EVENT_RECORDING_STOPPED: {
 		if (dstr_is_empty(&recording_target_name) == true) {
 			if (obs_hadowplay_get_fullscreen_window_name(
 				    &recording_target_name) == true) {
@@ -304,8 +309,12 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 		dstr_free(&recording_path);
 		break;
+	}
 
 #pragma endregion Recording events
+	default: {
+		break;
+	}
 	}
 }
 
