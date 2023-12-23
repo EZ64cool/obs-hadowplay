@@ -72,7 +72,6 @@ jobs:
           fi
 
   macos-build:
-    if: false
     name: Build for macOS 🍏
     runs-on: macos-13
     needs: check-event
