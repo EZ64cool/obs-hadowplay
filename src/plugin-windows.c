@@ -249,5 +249,4 @@ extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
 {
 	return !EnumWindows(win_enum_windows, (LPARAM)process_name);
 }
-
 #endif
