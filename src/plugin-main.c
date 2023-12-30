@@ -157,6 +157,16 @@ void *obs_hadowplay_update(void *param)
 		os_sleep_ms(1000);
 	}
 
+	os_atomic_store_bool(&obs_hadowplay_manual_start, false);
+	os_atomic_store_bool(&obs_hadowplay_manual_stop, false);
+
+	if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) == true &&
+	    obs_frontend_replay_buffer_active() == true) {
+		os_atomic_store_bool(&obs_hadowplay_is_replay_controlled,
+				     false);
+		obs_frontend_replay_buffer_stop();
+	}
+
 	os_atomic_store_bool(&obs_hadowplay_update_thread_closed, true);
 
 	return 0;
