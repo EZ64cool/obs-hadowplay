@@ -57,7 +57,8 @@ void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 bool obs_hadowplay_is_replay_controlled = false;
 bool obs_hadowplay_manual_start = false;
 bool obs_hadowplay_manual_stop = false;
-bool obs_hadowplay_module_loaded = false;
+bool obs_hadowplay_update_thread_running = false;
+bool obs_hadowplay_update_thread_closed = false;
 
 extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name);
 
@@ -73,7 +74,8 @@ void *obs_hadowplay_update(void *param)
 	snprintf(thread_name, 64, "%s update thread", PLUGIN_NAME);
 	os_set_thread_name(thread_name);
 
-	while (os_atomic_load_bool(&obs_hadowplay_module_loaded) == true) {
+	while (os_atomic_load_bool(&obs_hadowplay_update_thread_running) ==
+	       true) {
 
 		obs_output_t *replay_output =
 			obs_frontend_get_replay_buffer_output();
@@ -155,6 +157,8 @@ void *obs_hadowplay_update(void *param)
 		os_sleep_ms(1000);
 	}
 
+	os_atomic_store_bool(&obs_hadowplay_update_thread_closed, true);
+
 	return 0;
 }
 
@@ -191,6 +195,27 @@ void obs_hadowplay_move_output_file(struct dstr *original_filepath,
 	dstr_free(&replay_filename);
 	dstr_free(&file_dir);
 	dstr_free(&new_filepath);
+}
+
+bool obs_hadowplay_close_update_thread()
+{
+	if (os_atomic_load_bool(&obs_hadowplay_update_thread_closed) == true) {
+		return true;
+	}
+
+	os_atomic_store_bool(&obs_hadowplay_update_thread_running, false);
+
+	obs_log(LOG_INFO, "Awaiting update thread closure");
+	void *return_val = NULL;
+	int result = pthread_join(update_thread, &return_val);
+	if (result == 0) {
+		obs_log(LOG_INFO, "Update thread closed");
+	} else {
+		obs_log(LOG_ERROR, "Failed to join update thread: %d", result);
+		return false;
+	}
+
+	return true;
 }
 
 void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
@@ -312,6 +337,11 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	}
 
 #pragma endregion Recording events
+	case OBS_FRONTEND_EVENT_EXIT: {
+		obs_hadowplay_close_update_thread();
+		break;
+	}
+
 	default: {
 		break;
 	}
@@ -321,7 +351,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 bool obs_module_load(void)
 {
 	// No need to be atomic since the thread hasn't started yet.
-	obs_hadowplay_module_loaded = true;
+	obs_hadowplay_update_thread_running = true;
 
 	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
 					NULL);
@@ -334,16 +364,8 @@ bool obs_module_load(void)
 
 void obs_module_unload()
 {
-	os_atomic_store_bool(&obs_hadowplay_module_loaded, false);
-
-	obs_log(LOG_INFO, "Awaiting update thread closure");
-	void *return_val = NULL;
-	int result = pthread_join(update_thread, &return_val);
-	if (result == 0) {
-		obs_log(LOG_INFO, "Update thread closed");
-	} else {
-		obs_log(LOG_ERROR, "Failed to join update thread: %d", result);
-	}
+	// Make sure the update thread has closed
+	obs_hadowplay_close_update_thread();
 
 	obs_log(LOG_INFO, "plugin unloaded");
 }
