@@ -98,7 +98,9 @@ void *obs_hadowplay_update(void *param)
 					    false &&
 				    os_atomic_load_bool(
 					    &obs_hadowplay_manual_stop) ==
-					    false) {
+					    false &&
+				    obs_hadowplay_get_fullscreen_window_name(
+					    NULL) == true) {
 					const char *source_name =
 						obs_source_get_name(
 							game_capture_source);

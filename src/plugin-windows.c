@@ -229,10 +229,12 @@ BOOL win_enum_windows(HWND window, LPARAM param)
 		}
 
 		if (excluded == false) {
-			if (dstr_is_empty(&product_name) == false) {
-				dstr_copy_dstr(str, &product_name);
-			} else {
-				dstr_copy_dstr(str, &filename);
+			if (str != NULL) {
+				if (dstr_is_empty(&product_name) == false) {
+					dstr_copy_dstr(str, &product_name);
+				} else {
+					dstr_copy_dstr(str, &filename);
+				}
 			}
 			found = true;
 		}
