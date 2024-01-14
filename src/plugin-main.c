@@ -25,9 +25,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/dstr.h>
 
 #include "plugin-support.h"
+#include "ui/SettingsDialog.hpp"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
+
+#define TEXT_SETTINGS_MENU obs_module_text("OBSHadowplay.Settings")
 
 void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 				       obs_source_t *source, void *param)
@@ -358,6 +361,13 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	}
 }
 
+void obs_hadowplay_show_settings_dialog(void *data)
+{
+	UNUSED_PARAMETER(data);
+
+	obs_hadowplay_qt_show_settings_dialog();
+}
+
 bool obs_module_load(void)
 {
 	// No need to be atomic since the thread hasn't started yet.
@@ -365,6 +375,15 @@ bool obs_module_load(void)
 
 	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
 					NULL);
+
+	obs_frontend_push_ui_translation(obs_module_get_string);
+
+	obs_hadowplay_qt_create_settings_dialog();
+
+	obs_frontend_pop_ui_translation();
+
+	obs_frontend_add_tools_menu_item(
+		TEXT_SETTINGS_MENU, obs_hadowplay_show_settings_dialog, NULL);
 
 	obs_log(LOG_INFO, "plugin loaded successfully (version %s)",
 		PLUGIN_VERSION);
@@ -376,6 +395,8 @@ void obs_module_unload()
 {
 	// Make sure the update thread has closed
 	obs_hadowplay_close_update_thread();
+
+	obs_hadowplay_qt_destroy_settings_dialog();
 
 	obs_log(LOG_INFO, "plugin unloaded");
 }
