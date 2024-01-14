@@ -16,14 +16,6 @@ void obs_hadowplay_qt_create_settings_dialog()
 	settings_dialog->hide();
 }
 
-void obs_hadowplay_qt_destroy_settings_dialog()
-{
-	if (settings_dialog != nullptr) {
-		delete settings_dialog;
-		settings_dialog = nullptr;
-	}
-}
-
 void obs_hadowplay_qt_show_settings_dialog()
 {
 	if (settings_dialog != nullptr) {

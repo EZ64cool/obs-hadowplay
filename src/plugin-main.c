@@ -396,7 +396,5 @@ void obs_module_unload()
 	// Make sure the update thread has closed
 	obs_hadowplay_close_update_thread();
 
-	obs_hadowplay_qt_destroy_settings_dialog();
-
 	obs_log(LOG_INFO, "plugin unloaded");
 }

@@ -25,7 +25,6 @@ private:
 #endif
 
 EXTERNC void obs_hadowplay_qt_create_settings_dialog();
-EXTERNC void obs_hadowplay_qt_destroy_settings_dialog();
 EXTERNC void obs_hadowplay_qt_show_settings_dialog();
 
 #endif // SETTINGSDIALOG_H
