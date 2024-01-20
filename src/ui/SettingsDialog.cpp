@@ -58,9 +58,9 @@ void SettingsDialog::showEvent(QShowEvent *event)
 }
 
 extern "C" void obs_hadowplay_replay_buffer_stop();
-void SettingsDialog::ApplyConfig(void *data)
+void SettingsDialog::ApplyConfig(void *config_data)
 {
-	auto *config = static_cast<config_t *>(data);
+	auto *config = static_cast<config_t *>(config_data);
 
 	config_set_bool(
 		config, PLUGIN_NAME, CONFIG_AUTOREPLAY_ENABLED,
