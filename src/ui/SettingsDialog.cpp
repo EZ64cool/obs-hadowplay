@@ -49,6 +49,8 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::showEvent(QShowEvent *event)
 {
+	UNUSED_PARAMETER(event);
+
 	config_t *profile_config = obs_frontend_get_profile_config();
 
 	ui->automatic_replay_checkbox->setChecked(config_get_bool(
