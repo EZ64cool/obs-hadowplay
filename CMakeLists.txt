@@ -41,6 +41,7 @@ target_sources(
           src/plugin-linux.c
           src/plugin-macos.c
           src/plugin-main.c
+          src/config/config.h
           src/ui/SettingsDialog.cpp
           src/ui/SettingsDialog.hpp
           src/ui/SettingsDialog.ui)
