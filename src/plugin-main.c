@@ -25,9 +25,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/dstr.h>
 
 #include "plugin-support.h"
+#include "ui/SettingsDialog.hpp"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
+
+#define TEXT_SETTINGS_MENU obs_module_text("OBSHadowplay.Settings")
 
 void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 				       obs_source_t *source, void *param)
@@ -66,6 +69,22 @@ pthread_t update_thread;
 struct dstr replay_target_name = {0};
 struct dstr recording_target_name = {0};
 
+#include <util/config-file.h>
+#include "config/config.h"
+
+extern void obs_hadowplay_replay_buffer_stop()
+{
+	os_atomic_store_bool(&obs_hadowplay_manual_start, false);
+	os_atomic_store_bool(&obs_hadowplay_manual_stop, false);
+
+	if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) == true &&
+	    obs_frontend_replay_buffer_active() == true) {
+		os_atomic_store_bool(&obs_hadowplay_is_replay_controlled,
+				     false);
+		obs_frontend_replay_buffer_stop();
+	}
+}
+
 void *obs_hadowplay_update(void *param)
 {
 	UNUSED_PARAMETER(param);
@@ -77,95 +96,98 @@ void *obs_hadowplay_update(void *param)
 	while (os_atomic_load_bool(&obs_hadowplay_update_thread_running) ==
 	       true) {
 
-		obs_output_t *replay_output =
-			obs_frontend_get_replay_buffer_output();
+		if (config_get_bool(obs_frontend_get_profile_config(),
+				    PLUGIN_NAME,
+				    CONFIG_AUTOREPLAY_ENABLED) == true) {
 
-		if (replay_output != NULL &&
-		    os_atomic_load_bool(&obs_hadowplay_manual_start) == false) {
-			obs_output_release(replay_output);
+			obs_output_t *replay_output =
+				obs_frontend_get_replay_buffer_output();
 
-			obs_source_t *scene_source =
-				obs_frontend_get_current_scene();
+			if (replay_output != NULL &&
+			    os_atomic_load_bool(&obs_hadowplay_manual_start) ==
+				    false) {
+				obs_output_release(replay_output);
 
-			obs_source_t *game_capture_source = NULL;
+				obs_source_t *scene_source =
+					obs_frontend_get_current_scene();
 
-			obs_source_enum_active_sources(
-				scene_source, obs_hadowplay_consume_enum_source,
-				&game_capture_source);
+				obs_source_t *game_capture_source = NULL;
 
-			if (game_capture_source != NULL) {
-				if (obs_frontend_replay_buffer_active() ==
-					    false &&
-				    os_atomic_load_bool(
-					    &obs_hadowplay_manual_stop) ==
-					    false) {
-					const char *source_name =
-						obs_source_get_name(
-							game_capture_source);
+				obs_source_enum_active_sources(
+					scene_source,
+					obs_hadowplay_consume_enum_source,
+					&game_capture_source);
+
+				if (game_capture_source != NULL) {
+					if (obs_frontend_replay_buffer_active() ==
+						    false &&
+					    os_atomic_load_bool(
+						    &obs_hadowplay_manual_stop) ==
+						    false) {
+						const char *source_name =
+							obs_source_get_name(
+								game_capture_source);
+						obs_log(LOG_INFO,
+							"Active game capture found: %s",
+							source_name);
+						os_atomic_store_bool(
+							&obs_hadowplay_is_replay_controlled,
+							true);
+						obs_frontend_replay_buffer_start();
+						obs_log(LOG_INFO,
+							"Replay buffer started");
+					}
+
+					obs_source_release(game_capture_source);
+				} else if (os_atomic_load_bool(
+						   &obs_hadowplay_is_replay_controlled) ==
+						   true &&
+					   obs_frontend_replay_buffer_active() ==
+						   true) {
 					obs_log(LOG_INFO,
-						"Active game capture found: %s",
-						source_name);
+						"No active game capture found");
+					obs_frontend_replay_buffer_stop();
+					obs_log(LOG_INFO,
+						"Replay buffer stopped");
+
 					os_atomic_store_bool(
 						&obs_hadowplay_is_replay_controlled,
-						true);
-					obs_frontend_replay_buffer_start();
-					obs_log(LOG_INFO,
-						"Replay buffer started");
+						false);
+				} else if (obs_frontend_replay_buffer_active() ==
+					   false) {
+					os_atomic_store_bool(
+						&obs_hadowplay_manual_stop,
+						false);
 				}
 
-				obs_source_release(game_capture_source);
-			} else if (os_atomic_load_bool(
-					   &obs_hadowplay_is_replay_controlled) ==
-					   true &&
-				   obs_frontend_replay_buffer_active() ==
-					   true) {
-				obs_log(LOG_INFO,
-					"No active game capture found");
-				obs_frontend_replay_buffer_stop();
-				obs_log(LOG_INFO, "Replay buffer stopped");
-
-				os_atomic_store_bool(
-					&obs_hadowplay_is_replay_controlled,
-					false);
-			} else if (obs_frontend_replay_buffer_active() ==
-				   false) {
-				os_atomic_store_bool(&obs_hadowplay_manual_stop,
-						     false);
+				obs_source_release(scene_source);
 			}
 
-			obs_source_release(scene_source);
-		}
-
-		if (obs_frontend_replay_buffer_active() == true &&
-		    dstr_is_empty(&replay_target_name)) {
-			if (obs_hadowplay_get_fullscreen_window_name(
-				    &replay_target_name) == true) {
-				obs_log(LOG_INFO, "Replay target found: %s",
-					replay_target_name.array);
+			if (obs_frontend_replay_buffer_active() == true &&
+			    dstr_is_empty(&replay_target_name)) {
+				if (obs_hadowplay_get_fullscreen_window_name(
+					    &replay_target_name) == true) {
+					obs_log(LOG_INFO,
+						"Replay target found: %s",
+						replay_target_name.array);
+				}
 			}
-		}
 
-		if (obs_frontend_recording_active() == true &&
-		    dstr_is_empty(&recording_target_name)) {
-			if (obs_hadowplay_get_fullscreen_window_name(
-				    &recording_target_name) == true) {
-				obs_log(LOG_INFO, "Recording target found: %s",
-					recording_target_name.array);
+			if (obs_frontend_recording_active() == true &&
+			    dstr_is_empty(&recording_target_name)) {
+				if (obs_hadowplay_get_fullscreen_window_name(
+					    &recording_target_name) == true) {
+					obs_log(LOG_INFO,
+						"Recording target found: %s",
+						recording_target_name.array);
+				}
 			}
-		}
 
-		os_sleep_ms(1000);
+			os_sleep_ms(1000);
+		}
 	}
 
-	os_atomic_store_bool(&obs_hadowplay_manual_start, false);
-	os_atomic_store_bool(&obs_hadowplay_manual_stop, false);
-
-	if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) == true &&
-	    obs_frontend_replay_buffer_active() == true) {
-		os_atomic_store_bool(&obs_hadowplay_is_replay_controlled,
-				     false);
-		obs_frontend_replay_buffer_stop();
-	}
+	obs_hadowplay_replay_buffer_stop();
 
 	os_atomic_store_bool(&obs_hadowplay_update_thread_closed, true);
 
@@ -358,6 +380,13 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	}
 }
 
+void obs_hadowplay_show_settings_dialog(void *data)
+{
+	UNUSED_PARAMETER(data);
+
+	obs_hadowplay_qt_show_settings_dialog();
+}
+
 bool obs_module_load(void)
 {
 	// No need to be atomic since the thread hasn't started yet.
@@ -365,6 +394,15 @@ bool obs_module_load(void)
 
 	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
 					NULL);
+
+	obs_frontend_push_ui_translation(obs_module_get_string);
+
+	obs_hadowplay_qt_create_settings_dialog();
+
+	obs_frontend_pop_ui_translation();
+
+	obs_frontend_add_tools_menu_item(
+		TEXT_SETTINGS_MENU, obs_hadowplay_show_settings_dialog, NULL);
 
 	obs_log(LOG_INFO, "plugin loaded successfully (version %s)",
 		PLUGIN_VERSION);
