@@ -62,7 +62,8 @@
         "QT_VERSION": "6",
         "CMAKE_SYSTEM_VERSION": "10.0.18363.657",
         "ENABLE_FRONTEND_API": true,
-        "ENABLE_QT": true
+        "ENABLE_QT": true,
+        "CMAKE_INSTALL_PREFIX": ".\\..\\..\\obs-studio\\build_x64\\rundir\\RelWithDebInfo"
       }
     },
     {
