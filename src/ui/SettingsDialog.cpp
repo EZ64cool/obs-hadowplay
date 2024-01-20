@@ -7,7 +7,7 @@
 
 #include <util/config-file.h>
 #include "plugin-support.h"
-#include "config\config.h"
+#include "config/config.h"
 
 static SettingsDialog *settings_dialog = nullptr;
 
