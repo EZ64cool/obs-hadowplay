@@ -17,6 +17,13 @@ public:
 	explicit SettingsDialog(QWidget *parent = nullptr);
 	~SettingsDialog();
 
+	void ApplyConfig(void *data);
+	void showEvent(QShowEvent *event);
+
+private slots:
+	void button_box_accepted();
+	void button_box_rejected();
+
 private:
 	Ui::SettingsDialog *ui;
 };

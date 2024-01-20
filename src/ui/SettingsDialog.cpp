@@ -5,6 +5,10 @@
 #include <obs-module.h>
 #include <QMainWindow>
 
+#include <util/config-file.h>
+#include "plugin-support.h"
+#include "config\config.h"
+
 static SettingsDialog *settings_dialog = nullptr;
 
 void obs_hadowplay_qt_create_settings_dialog()
@@ -31,9 +35,49 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 
 	// Remove the ? button on dialogs on Windows
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+	connect(ui->button_box, &QDialogButtonBox::accepted, this,
+		&SettingsDialog::button_box_accepted);
+	connect(ui->button_box, &QDialogButtonBox::rejected, this,
+		&SettingsDialog::button_box_rejected);
 }
 
 SettingsDialog::~SettingsDialog()
 {
 	delete ui;
 }
+
+void SettingsDialog::showEvent(QShowEvent *event)
+{
+	config_t *profile_config = obs_frontend_get_profile_config();
+
+	ui->automatic_replay_checkbox->setChecked(config_get_bool(
+		profile_config, PLUGIN_NAME, CONFIG_AUTOREPLAY_ENABLED));
+}
+
+extern "C" void obs_hadowplay_replay_buffer_stop();
+void SettingsDialog::ApplyConfig(void *data)
+{
+	auto *config = static_cast<config_t *>(data);
+
+	config_set_bool(
+		config, PLUGIN_NAME, CONFIG_AUTOREPLAY_ENABLED,
+		settings_dialog->ui->automatic_replay_checkbox->isChecked());
+
+	int result = config_save(config);
+	if (result != 0) {
+		blog(LOG_ERROR, "Failed to save config");
+		return;
+	}
+
+	obs_hadowplay_replay_buffer_stop();
+}
+
+void SettingsDialog::button_box_accepted()
+{
+	config_t *profile_config = obs_frontend_get_profile_config();
+
+	settings_dialog->ApplyConfig(profile_config);
+}
+
+void SettingsDialog::button_box_rejected() {}
