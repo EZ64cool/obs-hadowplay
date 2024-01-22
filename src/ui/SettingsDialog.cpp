@@ -3,33 +3,15 @@
 
 #include <obs-frontend-api.h>
 #include <obs-module.h>
-#include <QMainWindow>
 
 #include <util/config-file.h>
 #include "plugin-support.h"
-#include "config/config.h"
+#include "config/config.hpp"
 
-static SettingsDialog *settings_dialog = nullptr;
-
-void obs_hadowplay_qt_create_settings_dialog()
-{
-	QMainWindow *main_window =
-		static_cast<QMainWindow *>(obs_frontend_get_main_window());
-
-	settings_dialog = new SettingsDialog(main_window);
-	settings_dialog->hide();
-}
-
-void obs_hadowplay_qt_show_settings_dialog()
-{
-	if (settings_dialog != nullptr) {
-		settings_dialog->show();
-	}
-}
-
-SettingsDialog::SettingsDialog(QWidget *parent)
+SettingsDialog::SettingsDialog(Config &config, QWidget *parent)
 	: QDialog(parent),
-	  ui(new Ui::SettingsDialog)
+	  ui(new Ui::SettingsDialog),
+	  m_config(config)
 {
 	ui->setupUi(this);
 
@@ -38,8 +20,6 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 
 	connect(ui->button_box, &QDialogButtonBox::accepted, this,
 		&SettingsDialog::button_box_accepted);
-	connect(ui->button_box, &QDialogButtonBox::rejected, this,
-		&SettingsDialog::button_box_rejected);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -51,25 +31,29 @@ void SettingsDialog::showEvent(QShowEvent *event)
 {
 	UNUSED_PARAMETER(event);
 
-	config_t *profile_config = obs_frontend_get_profile_config();
+	ui->automatic_replay_checkbox->setChecked(
+		m_config.m_auto_replay_buffer);
 
-	ui->automatic_replay_checkbox->setChecked(config_get_bool(
-		profile_config, PLUGIN_NAME, CONFIG_AUTOREPLAY_ENABLED));
+	ui->exceptions_list->clear();
+	for (int i = 0; i < this->m_config.m_exclusions.size(); ++i) {
+		this->ui->exceptions_list->addItem(
+			QString::fromStdString(this->m_config.m_exclusions[i]));
+	}
 }
 
-extern "C" void obs_hadowplay_replay_buffer_stop();
-void SettingsDialog::ApplyConfig(void *config_data)
+extern void obs_hadowplay_replay_buffer_stop();
+void SettingsDialog::ApplyConfig()
 {
-	auto *config = static_cast<config_t *>(config_data);
+	this->m_config.m_auto_replay_buffer =
+		this->ui->automatic_replay_checkbox->isChecked();
 
-	config_set_bool(
-		config, PLUGIN_NAME, CONFIG_AUTOREPLAY_ENABLED,
-		settings_dialog->ui->automatic_replay_checkbox->isChecked());
+	int count = this->ui->exceptions_list->count();
 
-	int result = config_save(config);
-	if (result != 0) {
-		blog(LOG_ERROR, "Failed to save config");
-		return;
+	this->m_config.m_exclusions.clear();
+	for (int i = 0; i < count; ++i) {
+		auto item = this->ui->exceptions_list->item(i);
+		this->m_config.m_exclusions.push_back(
+			item->text().toStdString().c_str());
 	}
 
 	obs_hadowplay_replay_buffer_stop();
@@ -77,9 +61,5 @@ void SettingsDialog::ApplyConfig(void *config_data)
 
 void SettingsDialog::button_box_accepted()
 {
-	config_t *profile_config = obs_frontend_get_profile_config();
-
-	settings_dialog->ApplyConfig(profile_config);
+	this->ApplyConfig();
 }
-
-void SettingsDialog::button_box_rejected() {}
