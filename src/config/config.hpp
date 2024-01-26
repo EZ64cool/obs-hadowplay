@@ -10,6 +10,9 @@
 #include <obs.h>
 
 struct Config {
+
+	static Config &Inst();
+
 	Config();
 
 	void Load(obs_data_t *load_data);

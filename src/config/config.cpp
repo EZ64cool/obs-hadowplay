@@ -2,6 +2,13 @@
 #include "plugin-support.h"
 #include <obs.hpp>
 
+static Config config;
+
+Config &Config::Inst()
+{
+	return config;
+}
+
 Config::Config() {}
 
 void Config::Save(obs_data_t *save_data)
@@ -19,6 +26,8 @@ void Config::Save(obs_data_t *save_data)
 				    this->m_exclusions[i].c_str());
 		obs_data_array_push_back(exclusions, item);
 	}
+
+	obs_data_set_array(hadowplay_data, CONFIG_EXCLUSIONS, exclusions);
 
 	obs_data_set_obj(save_data, PLUGIN_NAME, hadowplay_data);
 }

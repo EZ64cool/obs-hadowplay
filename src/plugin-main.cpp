@@ -39,7 +39,7 @@ void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 	UNUSED_PARAMETER(parent);
 
 	obs_source_t **active_game_capture =
-		static_cast<obs_source_t **>(param);
+		reinterpret_cast<obs_source_t **>(param);
 
 	if (*active_game_capture != NULL)
 		return;
@@ -67,8 +67,6 @@ bool obs_hadowplay_update_thread_closed = false;
 
 extern "C" bool
 obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name);
-
-static Config config;
 
 pthread_t update_thread;
 struct dstr replay_target_name = {0};
@@ -98,7 +96,7 @@ void *obs_hadowplay_update(void *param)
 	while (os_atomic_load_bool(&obs_hadowplay_update_thread_running) ==
 	       true) {
 
-		if (config.m_auto_replay_buffer == true) {
+		if (Config::Inst().m_auto_replay_buffer == true) {
 
 			obs_output_t *replay_output =
 				obs_frontend_get_replay_buffer_output();
@@ -388,9 +386,9 @@ void obs_hadowplay_save_callback(obs_data_t *save_data, bool saving,
 	UNUSED_PARAMETER(private_data);
 
 	if (saving == true) {
-		config.Save(save_data);
+		Config::Inst().Save(save_data);
 	} else {
-		config.Load(save_data);
+		Config::Inst().Load(save_data);
 	}
 }
 
@@ -416,10 +414,7 @@ bool obs_module_load(void)
 
 	obs_frontend_push_ui_translation(obs_module_get_string);
 
-	QMainWindow *main_window =
-		static_cast<QMainWindow *>(obs_frontend_get_main_window());
-
-	settings_dialog = new SettingsDialog(config, main_window);
+	settings_dialog = new SettingsDialog();
 	settings_dialog->hide();
 
 	obs_frontend_pop_ui_translation();

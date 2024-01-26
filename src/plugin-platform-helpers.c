@@ -1,6 +1,12 @@
 #include <util/dstr.h>
 
-bool dstr_get_filename(struct dstr *filepath, struct dstr *filename)
+#ifdef __cplusplus
+#define EXTERNC extern "C"
+#else
+#define EXTERNC
+#endif
+
+EXTERNC bool dstr_get_filename(struct dstr *filepath, struct dstr *filename)
 {
 	const char *filename_start = strrchr(filepath->array, '\\') + 1;
 

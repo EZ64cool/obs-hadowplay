@@ -37,7 +37,7 @@ endif()
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-platform-helpers.c
-          src/plugin-windows.c
+          src/plugin-windows.cpp
           src/plugin-linux.c
           src/plugin-macos.c
           src/plugin-main.cpp
