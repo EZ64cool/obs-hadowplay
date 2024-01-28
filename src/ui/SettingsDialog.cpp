@@ -41,7 +41,7 @@ void SettingsDialog::showEvent(QShowEvent *event)
 		Config::Inst().m_auto_replay_buffer);
 
 	ui->exceptions_list->clear();
-	for (int i = 0; i < Config::Inst().m_exclusions.size(); ++i) {
+	for (size_t i = 0; i < Config::Inst().m_exclusions.size(); ++i) {
 		this->ui->exceptions_list->addItem(
 			QString::fromStdString(Config::Inst().m_exclusions[i]));
 	}
