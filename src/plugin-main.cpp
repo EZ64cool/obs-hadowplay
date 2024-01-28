@@ -26,6 +26,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "plugin-support.h"
 #include "ui/SettingsDialog.hpp"
+#include "config/config.hpp"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
@@ -37,7 +38,8 @@ void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 {
 	UNUSED_PARAMETER(parent);
 
-	obs_source_t **active_game_capture = param;
+	obs_source_t **active_game_capture =
+		reinterpret_cast<obs_source_t **>(param);
 
 	if (*active_game_capture != NULL)
 		return;
@@ -63,14 +65,12 @@ bool obs_hadowplay_manual_stop = false;
 bool obs_hadowplay_update_thread_running = false;
 bool obs_hadowplay_update_thread_closed = false;
 
-extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name);
+extern "C" bool
+obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name);
 
 pthread_t update_thread;
 struct dstr replay_target_name = {0};
 struct dstr recording_target_name = {0};
-
-#include <util/config-file.h>
-#include "config/config.h"
 
 extern void obs_hadowplay_replay_buffer_stop()
 {
@@ -96,9 +96,7 @@ void *obs_hadowplay_update(void *param)
 	while (os_atomic_load_bool(&obs_hadowplay_update_thread_running) ==
 	       true) {
 
-		if (config_get_bool(obs_frontend_get_profile_config(),
-				    PLUGIN_NAME,
-				    CONFIG_AUTOREPLAY_ENABLED) == true) {
+		if (Config::Inst().m_auto_replay_buffer == true) {
 
 			obs_output_t *replay_output =
 				obs_frontend_get_replay_buffer_output();
@@ -123,7 +121,9 @@ void *obs_hadowplay_update(void *param)
 						    false &&
 					    os_atomic_load_bool(
 						    &obs_hadowplay_manual_stop) ==
-						    false) {
+						    false &&
+					    obs_hadowplay_get_fullscreen_window_name(
+						    NULL) == true) {
 						const char *source_name =
 							obs_source_get_name(
 								game_capture_source);
@@ -380,11 +380,28 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	}
 }
 
+void obs_hadowplay_save_callback(obs_data_t *save_data, bool saving,
+				 void *private_data)
+{
+	UNUSED_PARAMETER(private_data);
+
+	if (saving == true) {
+		Config::Inst().Save(save_data);
+	} else {
+		Config::Inst().Load(save_data);
+	}
+}
+
+#include <QMainWindow>
+#include "ui/SettingsDialog.hpp"
+
+static SettingsDialog *settings_dialog = nullptr;
+
 void obs_hadowplay_show_settings_dialog(void *data)
 {
 	UNUSED_PARAMETER(data);
 
-	obs_hadowplay_qt_show_settings_dialog();
+	settings_dialog->show();
 }
 
 bool obs_module_load(void)
@@ -397,12 +414,15 @@ bool obs_module_load(void)
 
 	obs_frontend_push_ui_translation(obs_module_get_string);
 
-	obs_hadowplay_qt_create_settings_dialog();
+	settings_dialog = new SettingsDialog();
+	settings_dialog->hide();
 
 	obs_frontend_pop_ui_translation();
 
 	obs_frontend_add_tools_menu_item(
 		TEXT_SETTINGS_MENU, obs_hadowplay_show_settings_dialog, NULL);
+
+	obs_frontend_add_save_callback(obs_hadowplay_save_callback, NULL);
 
 	obs_log(LOG_INFO, "plugin loaded successfully (version %s)",
 		PLUGIN_VERSION);

@@ -37,11 +37,12 @@ endif()
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-platform-helpers.c
-          src/plugin-windows.c
+          src/plugin-windows.cpp
           src/plugin-linux.c
           src/plugin-macos.c
-          src/plugin-main.c
-          src/config/config.h
+          src/plugin-main.cpp
+          src/config/config.hpp
+          src/config/config.cpp
           src/ui/SettingsDialog.cpp
           src/ui/SettingsDialog.hpp
           src/ui/SettingsDialog.ui)

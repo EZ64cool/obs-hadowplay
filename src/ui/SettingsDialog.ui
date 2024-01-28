@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>356</width>
-    <height>104</height>
+    <height>362</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,6 +23,101 @@
    <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="group_box_global">
+     <property name="title">
+      <string>OBSHadowplay.Settings.Global</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QLabel" name="exxceptions_label">
+        <property name="text">
+         <string>OBSHadowplay.Settings.Exceptions</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QListWidget" name="exceptions_list">
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <property name="showDropIndicator" stdset="0">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QPushButton" name="add_exception_button">
+            <property name="toolTip">
+             <string>OBSHadowplay.Settings.AddException</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="themeID" stdset="0">
+             <string>addIconSmall</string>
+            </property>
+            <property name="toolButton" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="edit_exception_button">
+            <property name="toolTip">
+             <string>OBSHadowplay.Settings.EditException</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="themeID" stdset="0">
+             <string>cogsIcon</string>
+            </property>
+            <property name="toolButton" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="delete_exception_button">
+            <property name="toolTip">
+             <string>OBSHadowplay.Settings.DeleteException</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="themeID" stdset="0">
+             <string>removeIconSmall</string>
+            </property>
+            <property name="toolButton" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item>
     <widget class="QGroupBox" name="group_box_profile">
      <property name="title">
