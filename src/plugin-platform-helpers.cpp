@@ -18,6 +18,18 @@ bool dstr_get_filename(struct dstr *filepath, struct dstr *filename)
 	return true;
 }
 
+#include <QString>
+#include <obs-module.h>
+
+extern "C" void obs_hadowplay_play_sound(const wchar_t *filepath);
+
+void obs_hadowplay_play_notif_sound()
+{
+	QString filepath = obs_module_file("notification.wav");
+
+	obs_hadowplay_play_sound(filepath.toStdWString().c_str());
+}
+
 #include <QSystemTrayIcon>
 #include <obs-frontend-api.h>
 

@@ -229,6 +229,7 @@ void obs_hadowplay_move_output_file(struct dstr *original_filepath,
 	dstr_init_copy(&title, "Replay Saved");
 
 	obs_hadowplay_show_notification(&title, &new_filepath);
+	obs_hadowplay_play_notif_sound();
 
 	dstr_free(&replay_filename);
 	dstr_free(&file_dir);
