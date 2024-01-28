@@ -10,14 +10,9 @@
 #include <winver.h>
 #include <Psapi.h>
 
-#pragma comment(lib, "Winmm.lib")
+#include "config/config.hpp"
 
-#include "plugin-platform-helpers.hpp"
-
-void obs_hadowplay_play_sound(const wchar_t *filepath)
-{
-	PlaySound(filepath, NULL, SND_FILENAME | SND_ASYNC);
-}
+extern "C" bool dstr_get_filename(struct dstr *filepath, struct dstr *filename);
 
 bool win_get_product_name(const struct dstr *filepath,
 			  struct dstr *product_name)
@@ -55,7 +50,8 @@ bool win_get_product_name(const struct dstr *filepath,
 	} *lpTranslate = 0;
 	UINT cbTranslate = 0;
 
-	if (VerQueryValueW(buffer, L"\\VarFileInfo\\Translation", &lpTranslate,
+	if (VerQueryValueW(buffer, L"\\VarFileInfo\\Translation",
+			   reinterpret_cast<void **>(&lpTranslate),
 			   &cbTranslate) == FALSE ||
 	    cbTranslate == 0) {
 		bfree(buffer);
@@ -64,7 +60,8 @@ bool win_get_product_name(const struct dstr *filepath,
 
 	const LANGID user_language_id = GetUserDefaultUILanguage();
 	const UINT key_length = 50;
-	wchar_t *key = bmalloc(key_length * sizeof(wchar_t));
+	wchar_t *key = reinterpret_cast<wchar_t *>(
+		bmalloc(key_length * sizeof(wchar_t)));
 
 	if (key == NULL) {
 		bfree(buffer);
@@ -90,14 +87,16 @@ bool win_get_product_name(const struct dstr *filepath,
 	wchar_t *value = NULL;
 	UINT value_length = 0;
 
-	if (VerQueryValueW(buffer, key, &value, &value_length) == FALSE ||
+	if (VerQueryValueW(buffer, key, reinterpret_cast<void **>(&value),
+			   &value_length) == FALSE ||
 	    value == NULL || value_length == 0) {
 		swprintf_s(key, key_length,
 			   L"\\StringFileInfo\\%04x%04x\\ProductName",
 			   language_id, code_page_id);
 
-		if (VerQueryValueW(buffer, key, &value, &value_length) ==
-			    FALSE ||
+		if (VerQueryValueW(buffer, key,
+				   reinterpret_cast<void **>(&value),
+				   &value_length) == FALSE ||
 		    value == NULL || value_length == 0) {
 			bfree(key);
 			bfree(buffer);
@@ -115,7 +114,8 @@ bool win_get_product_name(const struct dstr *filepath,
 
 bool win_get_window_filepath(HWND window, struct dstr *process_filepath)
 {
-	wchar_t *buffer = bmalloc(MAX_PATH * sizeof(wchar_t));
+	wchar_t *buffer = reinterpret_cast<wchar_t *>(
+		bmalloc(MAX_PATH * sizeof(wchar_t)));
 
 	if (buffer == NULL) {
 		bfree(buffer);
@@ -172,9 +172,26 @@ static const char *exclusions[] = {
 	NULL,
 };
 
+bool obs_hadowplay_is_excluded(struct dstr &window_name)
+{
+	for (const char **vals = exclusions; *vals; vals++) {
+		if (strcmpi(*vals, window_name.array) == 0) {
+			return true;
+		}
+	}
+
+	for (std::string val : Config::Inst().m_exclusions) {
+		if (strcmpi(val.c_str(), window_name.array) == 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 BOOL win_enum_windows(HWND window, LPARAM param)
 {
-	struct dstr *str = (struct dstr *)param;
+	struct dstr *str = reinterpret_cast<struct dstr *>(param);
 
 	if (IsWindowVisible(window) == false)
 		return true;
@@ -223,20 +240,15 @@ BOOL win_enum_windows(HWND window, LPARAM param)
 
 		win_get_product_name(&filepath, &product_name);
 
-		bool excluded = false;
-
-		for (const char **vals = exclusions; *vals; vals++) {
-			if (strcmpi(*vals, filename.array) == 0) {
-				excluded = true;
-				break;
-			}
-		}
+		bool excluded = obs_hadowplay_is_excluded(filename);
 
 		if (excluded == false) {
-			if (dstr_is_empty(&product_name) == false) {
-				dstr_copy_dstr(str, &product_name);
-			} else {
-				dstr_copy_dstr(str, &filename);
+			if (str != NULL) {
+				if (dstr_is_empty(&product_name) == false) {
+					dstr_copy_dstr(str, &product_name);
+				} else {
+					dstr_copy_dstr(str, &filename);
+				}
 			}
 			found = true;
 		}
@@ -249,7 +261,8 @@ BOOL win_enum_windows(HWND window, LPARAM param)
 	return !found;
 }
 
-extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
+extern "C" bool
+obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
 {
 	return !EnumWindows(win_enum_windows, (LPARAM)process_name);
 }

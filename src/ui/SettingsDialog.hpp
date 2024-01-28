@@ -6,6 +6,8 @@
 
 #include <QDialog>
 
+struct Config;
+
 namespace Ui {
 class SettingsDialog;
 }
@@ -14,15 +16,17 @@ class SettingsDialog : public QDialog {
 	Q_OBJECT
 
 public:
-	explicit SettingsDialog(QWidget *parent = nullptr);
+	explicit SettingsDialog();
 	~SettingsDialog();
 
-	void ApplyConfig(void *data);
+	void ApplyConfig();
 	void showEvent(QShowEvent *event);
 
 private slots:
+	void add_exclusion_pressed();
+	void edit_exclusion_pressed();
+	void delete_exclusion_pressed();
 	void button_box_accepted();
-	void button_box_rejected();
 
 private:
 	Ui::SettingsDialog *ui;
@@ -30,8 +34,5 @@ private:
 #else
 #define EXTERNC
 #endif
-
-EXTERNC void obs_hadowplay_qt_create_settings_dialog();
-EXTERNC void obs_hadowplay_qt_show_settings_dialog();
 
 #endif // SETTINGSDIALOG_H
