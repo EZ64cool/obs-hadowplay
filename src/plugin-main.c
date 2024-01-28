@@ -25,6 +25,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/dstr.h>
 
 #include "plugin-support.h"
+#include "plugin-platform-helpers.hpp"
 #include "ui/SettingsDialog.hpp"
 
 OBS_DECLARE_MODULE()
@@ -223,6 +224,11 @@ void obs_hadowplay_move_output_file(struct dstr *original_filepath,
 	obs_log(LOG_INFO, "Renaming files: %s -> %s", original_filepath->array,
 		new_filepath.array);
 	os_rename(original_filepath->array, new_filepath.array);
+
+	struct dstr title;
+	dstr_init_copy(&title, "Replay Saved");
+
+	obs_hadowplay_show_notification(&title, &new_filepath);
 
 	dstr_free(&replay_filename);
 	dstr_free(&file_dir);

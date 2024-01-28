@@ -10,7 +10,7 @@
 #include <winver.h>
 #include <Psapi.h>
 
-extern bool dstr_get_filename(struct dstr *filepath, struct dstr *filename);
+#include "plugin-platform-helpers.hpp"
 
 bool win_get_product_name(const struct dstr *filepath,
 			  struct dstr *product_name)
@@ -162,9 +162,6 @@ static const char *exclusions[] = {
 	"obs",
 	"TextInputHost",
 	"NVIDIA Share",
-	"vlc",
-	"PotPlayer",
-	"Plex",
 	NULL,
 };
 
