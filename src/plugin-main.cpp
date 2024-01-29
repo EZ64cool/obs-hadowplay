@@ -228,8 +228,12 @@ void obs_hadowplay_move_output_file(struct dstr *original_filepath,
 	struct dstr title;
 	dstr_init_copy(&title, "Replay Saved");
 
-	obs_hadowplay_show_notification(&title, &new_filepath);
-	obs_hadowplay_play_notif_sound();
+	if (Config::Inst().m_play_notif_sound == true) {
+		obs_hadowplay_play_notif_sound();
+	}
+	if (Config::Inst().m_show_desktop_notif == true) {
+		obs_hadowplay_show_notification(&title, &new_filepath);
+	}
 
 	dstr_free(&replay_filename);
 	dstr_free(&file_dir);
