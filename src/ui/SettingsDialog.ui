@@ -26,13 +26,13 @@
    <item>
     <widget class="QGroupBox" name="group_box_global">
      <property name="title">
-      <string>OBSHadowplay.Settings.Global</string>
+      <string>OBSHadowplay.Settings</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <widget class="QLabel" name="exxceptions_label">
         <property name="text">
-         <string>OBSHadowplay.Settings.Exceptions</string>
+         <string>OBSHadowplay.Settings.Exclusions</string>
         </property>
        </widget>
       </item>
@@ -53,7 +53,7 @@
           <item>
            <widget class="QPushButton" name="add_exception_button">
             <property name="toolTip">
-             <string>OBSHadowplay.Settings.AddException</string>
+             <string>OBSHadowplay.Settings.AddExclusion</string>
             </property>
             <property name="text">
              <string/>
@@ -69,7 +69,7 @@
           <item>
            <widget class="QPushButton" name="edit_exception_button">
             <property name="toolTip">
-             <string>OBSHadowplay.Settings.EditException</string>
+             <string>OBSHadowplay.Settings.EditExclusion</string>
             </property>
             <property name="text">
              <string/>
@@ -85,7 +85,7 @@
           <item>
            <widget class="QPushButton" name="delete_exception_button">
             <property name="toolTip">
-             <string>OBSHadowplay.Settings.DeleteException</string>
+             <string>OBSHadowplay.Settings.DeleteExclusion</string>
             </property>
             <property name="text">
              <string/>
@@ -115,15 +115,6 @@
         </item>
        </layout>
       </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="group_box_profile">
-     <property name="title">
-      <string>OBSHadowplay.Settings.Profile</string>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <widget class="QCheckBox" name="automatic_replay_checkbox">
         <property name="text">

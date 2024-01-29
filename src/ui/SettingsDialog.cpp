@@ -71,8 +71,9 @@ void SettingsDialog::add_exclusion_pressed()
 {
 	bool ok;
 	QString text = QInputDialog::getText(
-		this, obs_module_text("OBS.Hadowplay.AddException"),
-		"Process name", QLineEdit::Normal, QString(), &ok);
+		this, obs_module_text("OBS.Hadowplay.AddExclusion"),
+		obs_module_text("OBSHadowplay.Settings.ProcessName"),
+		QLineEdit::Normal, QString(), &ok);
 
 	if (ok && text.isEmpty() == false) {
 		this->ui->exceptions_list->addItem(text);
@@ -83,8 +84,9 @@ void SettingsDialog::edit_exclusion_pressed()
 {
 	bool ok;
 	QString text = QInputDialog::getText(
-		this, obs_module_text("OBS.Hadowplay.EditException"),
-		"Process name", QLineEdit::Normal,
+		this, obs_module_text("OBS.Hadowplay.EditExclusion"),
+		obs_module_text("OBSHadowplay.Settings.ProcessName"),
+		QLineEdit::Normal,
 		this->ui->exceptions_list->currentItem()->text(), &ok);
 
 	if (ok && text.isEmpty() == false) {
