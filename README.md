@@ -9,6 +9,15 @@ Currently this includes automatic replay buffer start/stop based on a game captu
 I'd love to add the functionality of moving replays into folders named after the game-capture subject, but currently this seems to be an impossabiltiy without changes to obs and it's plugins.
 
 ## Changelog
+* v1.1.4
+  * Added user settings under the Tools menu
+    * Automatic replay buffer can now be toggled off
+    * Settings are saved at the scene collection level
+  * No longer starts recording if all running fullscreen windows are excluded
+    * User exclusions can be added through the settings menu
+  * Added notifications when recordings are organised into folders
+    * Both sound and dekstop notifications can be toggled through the settings menu
+
 * v1.1.3
   * Added automatic recording organisation **(windows only)**
 
