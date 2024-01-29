@@ -21,7 +21,7 @@ bool dstr_get_filename(struct dstr *filepath, struct dstr *filename)
 #include <QString>
 #include <obs-module.h>
 
-extern "C" void obs_hadowplay_play_sound(const wchar_t *filepath);
+extern void obs_hadowplay_play_sound(const wchar_t *filepath);
 
 void obs_hadowplay_play_notif_sound()
 {

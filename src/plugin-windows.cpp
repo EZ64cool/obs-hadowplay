@@ -10,9 +10,15 @@
 #include <winver.h>
 #include <Psapi.h>
 
+#pragma comment(lib, "Winmm.lib")
+
+#include "plugin-platform-helpers.hpp"
 #include "config/config.hpp"
 
-extern "C" bool dstr_get_filename(struct dstr *filepath, struct dstr *filename);
+void obs_hadowplay_play_sound(const wchar_t *filepath)
+{
+	PlaySound(filepath, NULL, SND_FILENAME | SND_ASYNC);
+}
 
 bool win_get_product_name(const struct dstr *filepath,
 			  struct dstr *product_name)
