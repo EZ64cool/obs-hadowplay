@@ -122,6 +122,20 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="play_notification_sound_checkbox">
+        <property name="text">
+         <string>OBSHadowplay.Settings.PlayNotificationSound</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="show_desktop_notif_checkbox">
+        <property name="text">
+         <string>OBSHadowplay.Settings.ShowDesktopNotification</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

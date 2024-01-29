@@ -40,6 +40,12 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->automatic_replay_checkbox->setChecked(
 		Config::Inst().m_auto_replay_buffer);
 
+	ui->play_notification_sound_checkbox->setChecked(
+		Config::Inst().m_play_notif_sound);
+
+	ui->show_desktop_notif_checkbox->setChecked(
+		Config::Inst().m_show_desktop_notif);
+
 	ui->exceptions_list->clear();
 	for (size_t i = 0; i < Config::Inst().m_exclusions.size(); ++i) {
 		this->ui->exceptions_list->addItem(
@@ -52,6 +58,12 @@ void SettingsDialog::ApplyConfig()
 {
 	Config::Inst().m_auto_replay_buffer =
 		this->ui->automatic_replay_checkbox->isChecked();
+
+	Config::Inst().m_play_notif_sound =
+		this->ui->play_notification_sound_checkbox->isChecked();
+
+	Config::Inst().m_show_desktop_notif =
+		this->ui->show_desktop_notif_checkbox->isChecked();
 
 	int count = this->ui->exceptions_list->count();
 
