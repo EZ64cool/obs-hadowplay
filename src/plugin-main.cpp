@@ -118,6 +118,33 @@ void *obs_hadowplay_update(void *param)
 					&game_capture_source);
 
 				if (game_capture_source != NULL) {
+					proc_handler_t *proc_handler =
+						obs_source_get_proc_handler(
+							game_capture_source);
+
+					calldata_t calldata;
+
+					calldata_init(&calldata);
+
+					proc_handler_call(proc_handler,
+							  "get_hooked",
+							  &calldata);
+
+					const char *title = calldata_string(
+						&calldata, "title");
+					const char *cls = calldata_string(
+						&calldata, "class");
+					const char *exe = calldata_string(
+						&calldata, "executable");
+
+					void *window =
+						obs_hadoowplay_print_window(
+							cls);
+
+					obs_log(LOG_INFO,
+						"game-capture info: %s %s %s %p",
+						title, cls, exe, window);
+
 					if (obs_frontend_replay_buffer_active() ==
 						    false &&
 					    os_atomic_load_bool(

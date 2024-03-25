@@ -20,6 +20,13 @@ void obs_hadowplay_play_sound(const wchar_t *filepath)
 	PlaySound(filepath, NULL, SND_FILENAME | SND_ASYNC);
 }
 
+void *obs_hadoowplay_print_window(const char *cls)
+{
+	HWND window = FindWindowA(cls, nullptr);
+
+	return (void *)window;
+}
+
 bool win_get_product_name(const struct dstr *filepath,
 			  struct dstr *product_name)
 {
