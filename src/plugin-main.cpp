@@ -112,7 +112,7 @@ void *obs_hadowplay_update(void *param)
 
 				obs_source_t *game_capture_source = NULL;
 
-				obs_source_enum_active_sources(
+				obs_source_enum_active_tree(
 					scene_source,
 					obs_hadowplay_consume_enum_source,
 					&game_capture_source);
