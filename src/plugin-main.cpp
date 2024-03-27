@@ -34,8 +34,31 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 #define TEXT_SETTINGS_MENU obs_module_text("OBSHadowplay.Settings")
 
-void obs_hadowplay_consume_enum_source(obs_source_t *parent,
-				       obs_source_t *source, void *param)
+bool obs_hadowplay_is_capture_source(obs_source_t *source)
+{
+	return (source != nullptr &&
+		(obs_source_get_id(source) == "game_capture" ||
+		 obs_source_get_id(source) == "win_capture"));
+}
+
+bool obs_hadowplay_is_capture_source_hooked(obs_source_t *source)
+{
+	calldata_t hooked_calldata;
+
+	proc_handler_t *source_proc_handler =
+		obs_source_get_proc_handler(source);
+	proc_handler_call(source_proc_handler, "get_hooked",
+				&hooked_calldata);
+
+	const bool hooked = calldata_bool(&hooked_calldata, "hooked");
+	const char *exe = calldata_string(&hooked_calldata, "executable");
+
+	return hooked && obs_hadowplay_is_exe_excluded(exe);
+}
+
+void obs_hadowplay_enum_source_for_hooked_capture(obs_source_t *parent,
+						  obs_source_t *source,
+						  void *param)
 {
 	UNUSED_PARAMETER(parent);
 
@@ -45,18 +68,8 @@ void obs_hadowplay_consume_enum_source(obs_source_t *parent,
 	if (*active_game_capture != NULL)
 		return;
 
-	const char *id = obs_source_get_id(source);
-
-	if (strcmp(id, "game_capture") == 0) {
-
-		uint32_t width = obs_source_get_width(source);
-		uint32_t height = obs_source_get_height(source);
-
-		bool is_active = width > 0 && height > 0;
-
-		if (is_active) {
-			*active_game_capture = obs_source_get_ref(source);
-		}
+	if (obs_hadowplay_is_capture_source(source) && obs_hadowplay_is_capture_source_hooked(source)) {
+		*active_game_capture = obs_source_get_ref(source);
 	}
 }
 
@@ -110,41 +123,14 @@ void *obs_hadowplay_update(void *param)
 				obs_source_t *scene_source =
 					obs_frontend_get_current_scene();
 
-				obs_source_t *game_capture_source = NULL;
+				obs_source_t *hooked_capture_source = NULL;
 
 				obs_source_enum_active_tree(
 					scene_source,
-					obs_hadowplay_consume_enum_source,
-					&game_capture_source);
+					obs_hadowplay_enum_source_for_hooked_capture,
+					&hooked_capture_source);
 
-				if (game_capture_source != NULL) {
-					proc_handler_t *proc_handler =
-						obs_source_get_proc_handler(
-							game_capture_source);
-
-					calldata_t calldata;
-
-					calldata_init(&calldata);
-
-					proc_handler_call(proc_handler,
-							  "get_hooked",
-							  &calldata);
-
-					const char *title = calldata_string(
-						&calldata, "title");
-					const char *cls = calldata_string(
-						&calldata, "class");
-					const char *exe = calldata_string(
-						&calldata, "executable");
-
-					void *window =
-						obs_hadoowplay_print_window(
-							cls);
-
-					obs_log(LOG_INFO,
-						"game-capture info: %s %s %s %p",
-						title, cls, exe, window);
-
+				if (hooked_capture_source != NULL) {
 					if (obs_frontend_replay_buffer_active() ==
 						    false &&
 					    os_atomic_load_bool(
@@ -154,7 +140,7 @@ void *obs_hadowplay_update(void *param)
 						    NULL) == true) {
 						const char *source_name =
 							obs_source_get_name(
-								game_capture_source);
+								hooked_capture_source);
 						obs_log(LOG_INFO,
 							"Active game capture found: %s",
 							source_name);
@@ -166,7 +152,7 @@ void *obs_hadowplay_update(void *param)
 							"Replay buffer started");
 					}
 
-					obs_source_release(game_capture_source);
+					obs_source_release(hooked_capture_source);
 				} else if (os_atomic_load_bool(
 						   &obs_hadowplay_is_replay_controlled) ==
 						   true &&
@@ -286,6 +272,135 @@ bool obs_hadowplay_close_update_thread()
 	}
 
 	return true;
+}
+
+bool obs_hadowplay_start_automatic_replay_buffer()
+{
+	// False if already running
+	if (obs_frontend_replay_buffer_active() == true)
+		return false;
+
+	// False if manually stopped
+	if (obs_hadowplay_manual_stop == true)
+		return false;
+
+	obs_hadowplay_is_replay_controlled = true;
+	obs_frontend_replay_buffer_start();
+
+	return true;
+}
+
+bool obs_hadowplay_stop_automatic_replay_buffer()
+{
+	// False if not running
+	if (obs_frontend_replay_buffer_active() == false)
+		return false;
+
+	// False if manually started
+	if (obs_hadowplay_manual_start == true)
+		return false;
+
+	obs_hadowplay_is_replay_controlled = false;
+	obs_frontend_replay_buffer_stop();
+
+	return true;
+}
+
+bool obs_hadowplay_has_active_captures()
+{
+	obs_source_t *scene_source = obs_frontend_get_current_scene();
+
+	obs_source_t *hooked_capture_source = nullptr;
+
+	obs_source_enum_active_tree(
+		scene_source, obs_hadowplay_enum_source_for_hooked_capture,
+		&hooked_capture_source);
+
+	return hooked_capture_source != nullptr;
+}
+
+#pragma region Hooked/UnHooked signals
+
+void obs_hadowplay_win_capture_hooked(void *data, calldata_t *calldata)
+{
+	if (calldata == nullptr)
+		return;
+
+	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
+	const char *title = calldata_string(calldata, "title");
+	const char *win_class = calldata_string(calldata, "class");
+	const char *exe = calldata_string(calldata, "executable");
+
+	if (obs_hadowplay_is_exe_excluded(exe) == false)
+	{
+		obs_hadowplay_start_automatic_replay_buffer();
+	}
+}
+
+void obs_hadowplay_win_capture_unhooked(void *data, calldata_t *calldata)
+{
+	if (calldata == nullptr)
+		return;
+
+	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
+
+	if (obs_hadowplay_has_active_captures() == false)
+	{
+		obs_hadowplay_stop_automatic_replay_buffer();
+	}
+}
+
+#pragma endregion
+
+#pragma region Activated/Deactivated signals
+
+void obs_hadowplay_source_activated(void *data, calldata_t *calldata)
+{
+	if (calldata == nullptr)
+		return;
+
+	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
+
+	if (obs_hadowplay_is_capture_source(source)) {
+		signal_handler_t *source_signal_handler =
+			obs_source_get_signal_handler(source);
+		signal_handler_connect(source_signal_handler, "hooked",
+				       &obs_hadowplay_win_capture_hooked,
+				       nullptr);
+		signal_handler_connect(source_signal_handler, "unhooked",
+				       &obs_hadowplay_win_capture_hooked,
+				       nullptr);
+	}
+}
+
+void obs_hadowplay_source_deactivated(void *data, calldata_t *calldata)
+{
+	if (calldata == nullptr)
+		return;
+
+	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
+
+	if (obs_hadowplay_is_capture_source(source)) {
+		signal_handler_t *source_signal_handler =
+			obs_source_get_signal_handler(source);
+		signal_handler_disconnect(source_signal_handler, "hooked",
+					  &obs_hadowplay_win_capture_hooked,
+					  nullptr);
+		signal_handler_disconnect(source_signal_handler, "unhooked",
+					  &obs_hadowplay_win_capture_hooked,
+					  nullptr);
+	}
+}
+
+#pragma endregion
+
+void obs_hadowplay_initialise()
+{
+	signal_handler_t *signal_handler = obs_get_signal_handler();
+	signal_handler_connect(signal_handler, "source_activate",
+			       &obs_hadowplay_source_activated, nullptr);
+	signal_handler_connect(signal_handler, "source_deactivate",
+			       &obs_hadowplay_source_deactivated, nullptr);
 }
 
 void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,

@@ -20,13 +20,6 @@ void obs_hadowplay_play_sound(const wchar_t *filepath)
 	PlaySound(filepath, NULL, SND_FILENAME | SND_ASYNC);
 }
 
-void *obs_hadoowplay_print_window(const char *cls)
-{
-	HWND window = FindWindowA(cls, nullptr);
-
-	return (void *)window;
-}
-
 bool win_get_product_name(const struct dstr *filepath,
 			  struct dstr *product_name)
 {
@@ -164,7 +157,6 @@ static const char *exclusions[] = {
 	"explorer",
 	"steam",
 	"battle.net",
-	"galaxyclient",
 	"skype",
 	"uplay",
 	"origin",
@@ -173,28 +165,30 @@ static const char *exclusions[] = {
 	"chrome",
 	"discord",
 	"firefox",
-	"systemsettings",
-	"applicationframehost",
-	"cmd",
-	"shellexperiencehost",
-	"searchui",
-	"lockapp",
 	"obs",
-	"TextInputHost",
-	"NVIDIA Share",
 	NULL,
 };
 
-bool obs_hadowplay_is_excluded(struct dstr &window_name)
+bool obs_hadowplay_is_exe_excluded(const char *exe)
 {
+	std::string exe_str = exe;
+
+	size_t dot_pos = exe_str.find_last_of('.');
+
+	// Truncate ".exe"
+	if (dot_pos != std::string::npos && exe_str.compare(dot_pos, exe_str.size() - dot_pos, ".exe") == 0)
+	{
+		exe_str = exe_str.substr(0, exe_str.size() - 4);
+	}
+
 	for (const char **vals = exclusions; *vals; vals++) {
-		if (strcmpi(*vals, window_name.array) == 0) {
+		if (strcmpi(*vals, exe_str.c_str()) == 0) {
 			return true;
 		}
 	}
 
 	for (std::string val : Config::Inst().m_exclusions) {
-		if (strcmpi(val.c_str(), window_name.array) == 0) {
+		if (strcmpi(val.c_str(), exe_str.c_str()) == 0) {
 			return true;
 		}
 	}
@@ -253,7 +247,7 @@ BOOL win_enum_windows(HWND window, LPARAM param)
 
 		win_get_product_name(&filepath, &product_name);
 
-		bool excluded = obs_hadowplay_is_excluded(filename);
+		bool excluded = obs_hadowplay_is_exe_excluded(filename.array);
 
 		if (excluded == false) {
 			if (str != NULL) {
