@@ -36,14 +36,16 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 bool obs_hadowplay_is_capture_source(obs_source_t *source)
 {
+	obs_log(LOG_INFO, "Source id %s", obs_source_get_id(source));
 	return (source != nullptr &&
-		(obs_source_get_id(source) == "game_capture" ||
-		 obs_source_get_id(source) == "win_capture"));
+		(strcmpi(obs_source_get_id(source), "game_capture") == 0 ||
+		 strcmpi(obs_source_get_id(source), "window_capture") == 0));
 }
 
 bool obs_hadowplay_is_capture_source_hooked(obs_source_t *source)
 {
 	calldata_t hooked_calldata;
+	calldata_init(&hooked_calldata);
 
 	proc_handler_t *source_proc_handler =
 		obs_source_get_proc_handler(source);
@@ -331,6 +333,8 @@ void obs_hadowplay_win_capture_hooked(void *data, calldata_t *calldata)
 	const char *win_class = calldata_string(calldata, "class");
 	const char *exe = calldata_string(calldata, "executable");
 
+	obs_log(LOG_INFO, "Capture hooked %s", obs_source_get_name(source));
+
 	if (obs_hadowplay_is_exe_excluded(exe) == false)
 	{
 		obs_hadowplay_start_automatic_replay_buffer();
@@ -343,6 +347,8 @@ void obs_hadowplay_win_capture_unhooked(void *data, calldata_t *calldata)
 		return;
 
 	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
+
+	obs_log(LOG_INFO, "Capture unhooked %s", obs_source_get_name(source));
 
 	if (obs_hadowplay_has_active_captures() == false)
 	{
@@ -361,6 +367,8 @@ void obs_hadowplay_source_activated(void *data, calldata_t *calldata)
 
 	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
 
+	obs_log(LOG_INFO, "Source activated %s", obs_source_get_name(source));
+
 	if (obs_hadowplay_is_capture_source(source)) {
 		signal_handler_t *source_signal_handler =
 			obs_source_get_signal_handler(source);
@@ -370,6 +378,13 @@ void obs_hadowplay_source_activated(void *data, calldata_t *calldata)
 		signal_handler_connect(source_signal_handler, "unhooked",
 				       &obs_hadowplay_win_capture_hooked,
 				       nullptr);
+
+		obs_log(LOG_INFO, "Source connected %s", obs_source_get_name(source));
+
+		if (obs_hadowplay_has_active_captures())
+		{
+			obs_hadowplay_start_automatic_replay_buffer();
+		}
 	}
 }
 
@@ -379,6 +394,8 @@ void obs_hadowplay_source_deactivated(void *data, calldata_t *calldata)
 		return;
 
 	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
+
+	obs_log(LOG_INFO, "Source deactivated %s", obs_source_get_name(source));
 
 	if (obs_hadowplay_is_capture_source(source)) {
 		signal_handler_t *source_signal_handler =
@@ -401,6 +418,8 @@ void obs_hadowplay_initialise()
 			       &obs_hadowplay_source_activated, nullptr);
 	signal_handler_connect(signal_handler, "source_deactivate",
 			       &obs_hadowplay_source_deactivated, nullptr);
+
+	obs_log(LOG_INFO, "Sources connected");
 }
 
 void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
@@ -410,6 +429,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 	switch (event) {
 	case OBS_FRONTEND_EVENT_FINISHED_LOADING: {
+		break;
 		int result = pthread_create(&update_thread, NULL,
 					    obs_hadowplay_update, NULL);
 		if (result != 0) {
@@ -523,6 +543,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 
 #pragma endregion Recording events
 	case OBS_FRONTEND_EVENT_EXIT: {
+		break;
 		obs_hadowplay_close_update_thread();
 		break;
 	}
@@ -562,6 +583,8 @@ bool obs_module_load(void)
 	// No need to be atomic since the thread hasn't started yet.
 	obs_hadowplay_update_thread_running = true;
 
+	obs_hadowplay_initialise();
+
 	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
 					NULL);
 
@@ -586,7 +609,7 @@ bool obs_module_load(void)
 void obs_module_unload()
 {
 	// Make sure the update thread has closed
-	obs_hadowplay_close_update_thread();
+	// obs_hadowplay_close_update_thread();
 
 	obs_log(LOG_INFO, "plugin unloaded");
 }
