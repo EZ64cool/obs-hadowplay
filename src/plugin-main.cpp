@@ -183,9 +183,9 @@ void *obs_hadowplay_update(void *param)
 						recording_target_name.array);
 				}
 			}
-
-			os_sleep_ms(1000);
 		}
+
+		os_sleep_ms(1000);
 	}
 
 	obs_hadowplay_replay_buffer_stop();
