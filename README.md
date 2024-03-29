@@ -7,7 +7,7 @@ In an attempt to move away from ShadowPlay and it's lack of customization, I tho
 This includes automatic replay buffer start/stop based on a game capture within the active scene and the moving of replays/reordings into folders named after the game-capture subject.
 
 ## Changelog
-* v1.2.1
+* v1.2.2
   * Added user settings under the Tools menu
     * Automatic replay buffer can now be toggled off
     * Settings are saved at the scene collection level
