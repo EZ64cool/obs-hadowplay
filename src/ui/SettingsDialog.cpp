@@ -26,6 +26,11 @@ SettingsDialog::SettingsDialog() : QDialog(nullptr), ui(new Ui::SettingsDialog)
 
 	connect(ui->delete_exception_button, &QPushButton::pressed, this,
 		&SettingsDialog::delete_exclusion_pressed);
+
+	connect(ui->exceptions_list, &QListWidget::itemSelectionChanged, this,
+		&SettingsDialog::exceptions_list_selected_changed);
+
+	exceptions_list_selected_changed();
 }
 
 SettingsDialog::~SettingsDialog()
@@ -94,6 +99,9 @@ void SettingsDialog::add_exclusion_pressed()
 
 void SettingsDialog::edit_exclusion_pressed()
 {
+	if (this->ui->exceptions_list->currentItem() == nullptr)
+		return;
+
 	bool ok;
 	QString text = QInputDialog::getText(
 		this, obs_module_text("OBS.Hadowplay.EditExclusion"),
@@ -109,6 +117,12 @@ void SettingsDialog::edit_exclusion_pressed()
 void SettingsDialog::delete_exclusion_pressed()
 {
 	qDeleteAll(this->ui->exceptions_list->selectedItems());
+}
+
+void SettingsDialog::exceptions_list_selected_changed()
+{
+	this->ui->edit_exception_button->setDisabled(
+		this->ui->exceptions_list->currentItem() == nullptr);
 }
 
 void SettingsDialog::button_box_accepted()
