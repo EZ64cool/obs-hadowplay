@@ -175,6 +175,7 @@ static const char *exclusions[] = {
 	"obs",
 	"TextInputHost",
 	"NVIDIA Share",
+	"NVIDIA Overlay",
 	NULL,
 };
 
