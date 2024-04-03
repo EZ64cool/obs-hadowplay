@@ -150,6 +150,16 @@ bool win_get_window_filepath(HWND window, std::wstring &process_filepath)
 	return true;
 }
 
+std::string obs_hadowplay_strip_executable_extension(const std::string &filename)
+{
+	const char *ext = os_get_path_extension(filename.c_str());
+	if (ext != nullptr && strcmpi(ext, ".exe") == 0)
+	{
+		return filename.substr(0, ext - filename.c_str());
+	}
+	return filename;
+}
+
 bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 						std::string &product_name)
 {
@@ -176,15 +186,18 @@ bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 
 	bfree(win_class_w);
 
-	calldata_free(&hooked_calldata);
-
 	std::wstring filepath;
 
 	if (win_get_window_filepath(window, filepath) == true) {
 		if (win_get_product_name(filepath, product_name) == true) {
+			calldata_free(&hooked_calldata);
 			return true;
 		}
 	}
+
+	product_name = obs_hadowplay_strip_executable_extension(calldata_string(&hooked_calldata, "executable"));
+
+	calldata_free(&hooked_calldata);
 
 	return false;
 }
@@ -194,18 +207,10 @@ bool obs_hadowplay_is_exe_excluded(const char *exe)
 	if (exe == nullptr)
 		return true;
 
-	std::string exe_str = exe;
-
-	size_t dot_pos = exe_str.find_last_of('.');
-
-	// Truncate ".exe"
-	if (dot_pos != std::string::npos &&
-	    exe_str.compare(dot_pos, exe_str.size() - dot_pos, ".exe") == 0) {
-		exe_str = exe_str.substr(0, exe_str.size() - 4);
-	}
+	std::string exe_str = obs_hadowplay_strip_executable_extension(exe);
 
 	for (std::string val : Config::Inst().m_exclusions) {
-		if (strcmpi(val.data(), exe_str.data()) == 0) {
+		if (strcmpi(val.c_str(), exe_str.c_str()) == 0) {
 			return true;
 		}
 	}
