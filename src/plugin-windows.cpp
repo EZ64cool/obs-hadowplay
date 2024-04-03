@@ -169,7 +169,12 @@ bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 
 	const char *win_class = calldata_string(&hooked_calldata, "class");
 
-	HWND window = FindWindowA(win_class, nullptr);
+	wchar_t *win_class_w = nullptr;
+	os_utf8_to_wcs_ptr(win_class, strlen(win_class), &win_class_w);
+
+	HWND window = FindWindowW(win_class_w, nullptr);
+
+	bfree(win_class_w);
 
 	calldata_free(&hooked_calldata);
 
