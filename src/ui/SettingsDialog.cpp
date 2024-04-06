@@ -76,7 +76,9 @@ void SettingsDialog::ApplyConfig()
 	Config::Inst().m_exclusions.clear();
 	for (int i = 0; i < count; ++i) {
 		auto item = this->ui->exceptions_list->item(i);
-		Config::Inst().m_exclusions.push_back(obs_hadowplay_strip_executable_extension(item->text().toStdString()));
+		Config::Inst().m_exclusions.push_back(
+			obs_hadowplay_strip_executable_extension(
+				item->text().toStdString()));
 	}
 
 	obs_hadowplay_replay_buffer_stop();

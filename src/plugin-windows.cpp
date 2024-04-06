@@ -150,11 +150,11 @@ bool win_get_window_filepath(HWND window, std::wstring &process_filepath)
 	return true;
 }
 
-std::string obs_hadowplay_strip_executable_extension(const std::string &filename)
+std::string
+obs_hadowplay_strip_executable_extension(const std::string &filename)
 {
 	const char *ext = os_get_path_extension(filename.c_str());
-	if (ext != nullptr && strcmpi(ext, ".exe") == 0)
-	{
+	if (ext != nullptr && strcmpi(ext, ".exe") == 0) {
 		return filename.substr(0, ext - filename.c_str());
 	}
 	return filename;
@@ -195,7 +195,8 @@ bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 		}
 	}
 
-	product_name = obs_hadowplay_strip_executable_extension(calldata_string(&hooked_calldata, "executable"));
+	product_name = obs_hadowplay_strip_executable_extension(
+		calldata_string(&hooked_calldata, "executable"));
 
 	calldata_free(&hooked_calldata);
 

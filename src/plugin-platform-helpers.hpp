@@ -10,7 +10,8 @@
 #define EXTERNC
 #endif
 
-std::string obs_hadowplay_strip_executable_extension(const std::string &filename);
+std::string
+obs_hadowplay_strip_executable_extension(const std::string &filename);
 
 EXTERNC void obs_hadowplay_play_notif_sound();
 
