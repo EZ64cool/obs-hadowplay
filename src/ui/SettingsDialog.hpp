@@ -26,6 +26,7 @@ private slots:
 	void add_exclusion_pressed();
 	void edit_exclusion_pressed();
 	void delete_exclusion_pressed();
+	void exceptions_list_selected_changed();
 	void button_box_accepted();
 
 private:
