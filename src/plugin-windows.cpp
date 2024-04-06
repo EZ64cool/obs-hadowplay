@@ -20,35 +20,28 @@ void obs_hadowplay_play_sound(const wchar_t *filepath)
 	PlaySound(filepath, NULL, SND_FILENAME | SND_ASYNC);
 }
 
-bool win_get_product_name(const struct dstr *filepath,
-			  struct dstr *product_name)
+bool win_get_product_name(const std::wstring &filepath,
+			  std::string &product_name)
 {
-	wchar_t *const w_filename = dstr_to_wcs(filepath);
-
 	DWORD temp = 0;
 	const DWORD file_version_info_size = GetFileVersionInfoSizeExW(
-		FILE_VER_GET_NEUTRAL, w_filename, &temp);
+		FILE_VER_GET_NEUTRAL, filepath.c_str(), &temp);
 
 	if (file_version_info_size == 0) {
-		bfree(w_filename);
 		return false;
 	}
 
 	const LPVOID buffer = bmalloc(file_version_info_size);
 
 	if (buffer == NULL) {
-		bfree(w_filename);
 		return false;
 	}
 
-	if (GetFileVersionInfoExW(FILE_VER_GET_NEUTRAL, w_filename, 0UL,
+	if (GetFileVersionInfoExW(FILE_VER_GET_NEUTRAL, filepath.c_str(), 0UL,
 				  file_version_info_size, buffer) == FALSE) {
-		bfree(w_filename);
 		bfree(buffer);
 		return false;
 	}
-
-	bfree(w_filename);
 
 	struct LANGANDCODEPAGE {
 		WORD wLanguage;
@@ -113,12 +106,16 @@ bool win_get_product_name(const struct dstr *filepath,
 	bfree(key);
 	bfree(buffer);
 
-	dstr_from_wcs(product_name, value);
+	char *product_name_c = nullptr;
+	os_wcs_to_utf8_ptr(value, value_length, &product_name_c);
+
+	product_name = std::string(product_name_c);
+	bfree(product_name_c);
 
 	return true;
 }
 
-bool win_get_window_filepath(HWND window, struct dstr *process_filepath)
+bool win_get_window_filepath(HWND window, std::wstring &process_filepath)
 {
 	wchar_t *buffer = reinterpret_cast<wchar_t *>(
 		bmalloc(MAX_PATH * sizeof(wchar_t)));
@@ -146,131 +143,79 @@ bool win_get_window_filepath(HWND window, struct dstr *process_filepath)
 	}
 	CloseHandle(hProc);
 
-	dstr_from_wcs(process_filepath, buffer);
+	process_filepath = std::wstring(buffer);
 
 	bfree(buffer);
 
 	return true;
 }
 
-static const char *exclusions[] = {
-	"explorer",
-	"steam",
-	"battle.net",
-	"galaxyclient",
-	"skype",
-	"uplay",
-	"origin",
-	"devenv",
-	"taskmgr",
-	"chrome",
-	"discord",
-	"firefox",
-	"systemsettings",
-	"applicationframehost",
-	"cmd",
-	"shellexperiencehost",
-	"searchui",
-	"lockapp",
-	"obs",
-	"TextInputHost",
-	"NVIDIA Share",
-	"NVIDIA Overlay",
-	NULL,
-};
-
-bool obs_hadowplay_is_excluded(struct dstr &window_name)
+std::string
+obs_hadowplay_strip_executable_extension(const std::string &filename)
 {
-	for (const char **vals = exclusions; *vals; vals++) {
-		if (strcmpi(*vals, window_name.array) == 0) {
+	const char *ext = os_get_path_extension(filename.c_str());
+	if (ext != nullptr && strcmpi(ext, ".exe") == 0) {
+		return filename.substr(0, ext - filename.c_str());
+	}
+	return filename;
+}
+
+bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
+						std::string &product_name)
+{
+	if (source == nullptr)
+		return false;
+
+	calldata_t hooked_calldata;
+	calldata_init(&hooked_calldata);
+
+	proc_handler_t *source_proc_handler =
+		obs_source_get_proc_handler(source);
+	if (proc_handler_call(source_proc_handler, "get_hooked",
+			      &hooked_calldata) == false) {
+		calldata_free(&hooked_calldata);
+		return false;
+	}
+
+	const char *win_class = calldata_string(&hooked_calldata, "class");
+
+	wchar_t *win_class_w = nullptr;
+	os_utf8_to_wcs_ptr(win_class, strlen(win_class), &win_class_w);
+
+	HWND window = FindWindowW(win_class_w, nullptr);
+
+	bfree(win_class_w);
+
+	std::wstring filepath;
+
+	if (win_get_window_filepath(window, filepath) == true) {
+		if (win_get_product_name(filepath, product_name) == true) {
+			calldata_free(&hooked_calldata);
 			return true;
 		}
 	}
 
+	product_name = obs_hadowplay_strip_executable_extension(
+		calldata_string(&hooked_calldata, "executable"));
+
+	calldata_free(&hooked_calldata);
+
+	return false;
+}
+
+bool obs_hadowplay_is_exe_excluded(const char *exe)
+{
+	if (exe == nullptr)
+		return true;
+
+	std::string exe_str = obs_hadowplay_strip_executable_extension(exe);
+
 	for (std::string val : Config::Inst().m_exclusions) {
-		if (strcmpi(val.c_str(), window_name.array) == 0) {
+		if (strcmpi(val.c_str(), exe_str.c_str()) == 0) {
 			return true;
 		}
 	}
 
 	return false;
-}
-
-BOOL win_enum_windows(HWND window, LPARAM param)
-{
-	struct dstr *str = reinterpret_cast<struct dstr *>(param);
-
-	if (IsWindowVisible(window) == false)
-		return true;
-
-	RECT window_rect = {0};
-	if (GetWindowRect(window, &window_rect) == false) {
-		return true;
-	}
-
-	HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONULL);
-
-	if (monitor == NULL) {
-		return true;
-	}
-
-	MONITORINFO monitor_info = {0};
-	monitor_info.cbSize = sizeof(MONITORINFO);
-
-	if (GetMonitorInfoW(monitor, &monitor_info) == false) {
-		return true;
-	}
-
-	if (monitor_info.rcMonitor.left != window_rect.left ||
-	    monitor_info.rcMonitor.right != window_rect.right ||
-	    monitor_info.rcMonitor.top != window_rect.top ||
-	    monitor_info.rcMonitor.bottom != window_rect.bottom) {
-		return true;
-	}
-
-	struct dstr filepath;
-	dstr_init(&filepath);
-
-	bool found = false;
-
-	if (win_get_window_filepath(window, &filepath) == true) {
-
-		struct dstr filename;
-		dstr_init(&filename);
-
-		if (dstr_get_filename(&filepath, &filename) == false) {
-			return true;
-		}
-
-		struct dstr product_name;
-		dstr_init(&product_name);
-
-		win_get_product_name(&filepath, &product_name);
-
-		bool excluded = obs_hadowplay_is_excluded(filename);
-
-		if (excluded == false) {
-			if (str != NULL) {
-				if (dstr_is_empty(&product_name) == false) {
-					dstr_copy_dstr(str, &product_name);
-				} else {
-					dstr_copy_dstr(str, &filename);
-				}
-			}
-			found = true;
-		}
-
-		dstr_free(&filename);
-	}
-
-	dstr_free(&filepath);
-
-	return !found;
-}
-
-extern "C" bool
-obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
-{
-	return !EnumWindows(win_enum_windows, (LPARAM)process_name);
 }
 #endif

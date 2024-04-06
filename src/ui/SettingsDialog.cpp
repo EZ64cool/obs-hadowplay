@@ -6,6 +6,7 @@
 
 #include <util/config-file.h>
 #include "plugin-support.h"
+#include "plugin-platform-helpers.hpp"
 #include "config/config.hpp"
 
 SettingsDialog::SettingsDialog() : QDialog(nullptr), ui(new Ui::SettingsDialog)
@@ -76,7 +77,8 @@ void SettingsDialog::ApplyConfig()
 	for (int i = 0; i < count; ++i) {
 		auto item = this->ui->exceptions_list->item(i);
 		Config::Inst().m_exclusions.push_back(
-			item->text().toStdString().c_str());
+			obs_hadowplay_strip_executable_extension(
+				item->text().toStdString()));
 	}
 
 	obs_hadowplay_replay_buffer_stop();

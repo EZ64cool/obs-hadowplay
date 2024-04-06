@@ -1,6 +1,8 @@
 #pragma once
 
+#include <obs.h>
 #include <util/dstr.h>
+#include <string>
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"
@@ -8,9 +10,16 @@
 #define EXTERNC
 #endif
 
-EXTERNC bool dstr_get_filename(struct dstr *filepath, struct dstr *filename);
+std::string
+obs_hadowplay_strip_executable_extension(const std::string &filename);
 
 EXTERNC void obs_hadowplay_play_notif_sound();
 
-EXTERNC bool obs_hadowplay_show_notification(struct dstr *title,
-					     struct dstr *message);
+EXTERNC bool obs_hadowplay_is_exe_excluded(const char *exe);
+
+EXTERNC bool obs_hadowplay_show_notification(std::string &title,
+					     std::string &message);
+
+EXTERNC bool
+obs_hadowplay_get_product_name_from_source(obs_source_t *source,
+					   std::string &product_name);
