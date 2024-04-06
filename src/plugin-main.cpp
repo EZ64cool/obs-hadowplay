@@ -175,6 +175,9 @@ bool obs_hadowplay_start_automatic_replay_buffer()
 
 bool obs_hadowplay_stop_automatic_replay_buffer()
 {
+	// Clear manual stop if automatic stop is called
+	os_atomic_store_bool(&obs_hadowplay_manual_stop, false);
+
 	// False if not running
 	if (obs_frontend_replay_buffer_active() == false)
 		return false;
