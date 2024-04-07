@@ -1,5 +1,5 @@
 # OBS Hadowplay
-
+![Logo](/obs-hadowplay-icon.png)
 ## Introduction
 
 In an attempt to move away from ShadowPlay and it's lack of customization, I thought I'd bring the useful functionality over to OBS.
