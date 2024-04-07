@@ -13,8 +13,6 @@ This includes automatic replay buffer start/stop based on hooked captures within
     * No longer relies on enumerating fullscreen apps.
     * Grabs the top active capture's Product Description, Product Name or exe name at the time of saving.
     * Exceptions now only need to target applications that can be captured.
-
-* v1.2.2
   * Added user settings under the Tools menu
     * Automatic replay buffer can now be toggled off
     * Settings are saved at the scene collection level
