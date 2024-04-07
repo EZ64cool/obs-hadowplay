@@ -4,9 +4,16 @@
 
 In an attempt to move away from ShadowPlay and it's lack of customization, I thought I'd bring the useful functionality over to OBS.
 
-This includes automatic replay buffer start/stop based on a game capture within the active scene and the moving of replays/reordings into folders named after the game-capture subject.
+This includes automatic replay buffer start/stop based on hooked captures within the active scene and the organisation of replays/recordings into folders named after the capture subject.
 
 ## Changelog
+* v2.0.0
+  * Now works with all types of window-capture and game-capture
+  * Improved capture subject name retrieval
+    * No longer relies on enumerating fullscreen apps.
+    * Grabs the top active capture's Product Description, Product Name or exe name at the time of saving.
+    * Exceptions now only need to target applications that can be captured.
+
 * v1.2.2
   * Added user settings under the Tools menu
     * Automatic replay buffer can now be toggled off
@@ -24,10 +31,9 @@ This includes automatic replay buffer start/stop based on a game capture within 
 
 
 * v1.0.0
-
   * Initial release.
     * Automatic activation of the replay buffer when a game-capture is detected as being active (width & height > 0)
     * Manual replay buffer activation will not be stopped if a game-capture becomes inactive
     * Manual replay buffer deactivation is possible and will restart once game-captures become inactive
 
-Currently only works on Windows usings game-capture
+Currently only works on Windows
