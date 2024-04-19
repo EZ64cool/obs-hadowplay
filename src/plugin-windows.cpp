@@ -160,6 +160,35 @@ obs_hadowplay_strip_executable_extension(const std::string &filename)
 	return filename;
 }
 
+bool obs_hadowplay_wstring_ends_with(const std::wstring &string,
+				     const std::wstring &end)
+{
+	if (string.length() >= end.length()) {
+		return (string.compare(string.length() - end.length(),
+				       end.length(), end) == 0);
+	}
+	return false;
+}
+
+HWND obs_hadowplay_find_window(const std::wstring &win_class,
+			       const std::wstring &exe)
+{
+	HWND window = FindWindowW(win_class.c_str(), nullptr);
+
+	while (window != NULL) {
+		std::wstring filepath;
+		if (win_get_window_filepath(window, filepath) &&
+		    obs_hadowplay_wstring_ends_with(filepath, exe)) {
+			return window;
+		}
+
+		window =
+			FindWindowExW(NULL, window, win_class.c_str(), nullptr);
+	}
+
+	return NULL;
+}
+
 bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 						std::string &product_name)
 {
@@ -177,14 +206,18 @@ bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 		return false;
 	}
 
+	const char *exe = calldata_string(&hooked_calldata, "executable");
 	const char *win_class = calldata_string(&hooked_calldata, "class");
 
 	wchar_t *win_class_w = nullptr;
 	os_utf8_to_wcs_ptr(win_class, strlen(win_class), &win_class_w);
+	wchar_t *exe_w = nullptr;
+	os_utf8_to_wcs_ptr(exe, strlen(exe), &exe_w);
 
-	HWND window = FindWindowW(win_class_w, nullptr);
+	HWND window = obs_hadowplay_find_window(win_class_w, exe_w);
 
 	bfree(win_class_w);
+	bfree(exe_w);
 
 	std::wstring filepath;
 
@@ -195,8 +228,7 @@ bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 		}
 	}
 
-	product_name = obs_hadowplay_strip_executable_extension(
-		calldata_string(&hooked_calldata, "executable"));
+	product_name = obs_hadowplay_strip_executable_extension(exe);
 
 	calldata_free(&hooked_calldata);
 
