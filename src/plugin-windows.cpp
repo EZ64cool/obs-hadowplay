@@ -170,16 +170,11 @@ bool obs_hadowplay_wstring_ends_with(const std::wstring &string,
 	return false;
 }
 
-HWND obs_hadowplay_find_window(const std::wstring &title,
-			       const std::wstring &win_class,
-			       const std::wstring &exe)
+HWND obs_hadowplay_find_window_impl(const wchar_t *title,
+				    const std::wstring &win_class,
+				    const std::wstring &exe)
 {
-	HWND window = FindWindowW(win_class.c_str(), title.c_str());
-
-	// Window could have changed title
-	if (window == NULL) {
-		window = FindWindowW(win_class.c_str(), nullptr);
-	}
+	HWND window = FindWindowW(win_class.c_str(), title);
 
 	// Check window has matching filepath to provided exe
 	while (window != NULL) {
@@ -190,10 +185,26 @@ HWND obs_hadowplay_find_window(const std::wstring &title,
 		}
 
 		window = FindWindowExW(nullptr, window, win_class.c_str(),
-				       nullptr);
+				       title);
 	}
 
 	return NULL;
+}
+
+HWND obs_hadowplay_find_window(const std::wstring &title,
+			       const std::wstring &win_class,
+			       const std::wstring &exe)
+{
+	HWND window =
+		obs_hadowplay_find_window_impl(title.c_str(), win_class, exe);
+
+	if (window != NULL)
+		return window;
+
+	// The title could have changed, look for windows of similar type
+	window = obs_hadowplay_find_window_impl(nullptr, win_class, exe);
+
+	return window;
 }
 
 bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
