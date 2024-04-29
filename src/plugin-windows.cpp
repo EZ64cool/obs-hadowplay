@@ -235,7 +235,7 @@ bool obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 	wchar_t *exe_w = nullptr;
 	os_utf8_to_wcs_ptr(exe, strlen(exe), &exe_w);
 
-	HWND window = obs_hadowplay_find_window(win_class_w, title_w, exe_w);
+	HWND window = obs_hadowplay_find_window(title_w, win_class_w, exe_w);
 
 	bfree(title_w);
 	bfree(win_class_w);
