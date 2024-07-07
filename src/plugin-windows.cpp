@@ -167,19 +167,15 @@ std::string obs_hadowplay_cleanup_path_string(const std::string &filename)
 	wchar_t *w_filename = nullptr;
 	os_utf8_to_wcs_ptr(filename.c_str(), filename.length(), &w_filename);
 
-	wchar_t *w_output = reinterpret_cast<wchar_t *>(
-		bmalloc(MAX_PATH * sizeof(wchar_t)));
-
-	PathCleanupSpec(w_filename, w_output);
+	PathCleanupSpec(nullptr, w_filename);
 
 	char *output = nullptr;
 
-	os_wcs_to_utf8_ptr(w_output, wcslen(w_output), &output);
+	os_wcs_to_utf8_ptr(w_filename, wcslen(w_filename), &output);
 
 	std::string output_string(output);
 
 	bfree(w_filename);
-	bfree(w_output);
 	bfree(output);
 
 	if (output_string.length() == 0)
