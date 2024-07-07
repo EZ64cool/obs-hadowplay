@@ -162,20 +162,20 @@ obs_hadowplay_strip_executable_extension(const std::string &filename)
 
 #include <Shlobj.h>
 
-std::string obs_hadowplay_cleanup_path_string(const std::string &filename)
+std::string obs_hadowplay_cleanup_path_string(const std::string &path)
 {
-	wchar_t *w_filename = nullptr;
-	os_utf8_to_wcs_ptr(filename.c_str(), filename.length(), &w_filename);
+	wchar_t *w_path = nullptr;
+	os_utf8_to_wcs_ptr(path.c_str(), path.length(), &w_path);
 
-	PathCleanupSpec(nullptr, w_filename);
+	// This should never grow the buffer
+	PathCleanupSpec(nullptr, w_path);
 
 	char *output = nullptr;
-
-	os_wcs_to_utf8_ptr(w_filename, wcslen(w_filename), &output);
+	os_wcs_to_utf8_ptr(w_path, wcslen(w_path), &output);
 
 	std::string output_string(output);
 
-	bfree(w_filename);
+	bfree(w_path);
 	bfree(output);
 
 	if (output_string.length() == 0)
