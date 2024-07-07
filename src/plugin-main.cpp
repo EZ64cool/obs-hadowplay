@@ -120,7 +120,8 @@ void obs_hadowplay_move_output_file(const std::string &original_filepath,
 	std::string replay_filename = original_filepath.substr(filename_pos);
 
 	std::string target_directory =
-		original_filepath.substr(0, filename_pos) + target_name;
+		original_filepath.substr(0, filename_pos) +
+		obs_hadowplay_cleanup_path_string(target_name);
 
 	if (os_file_exists(target_directory.c_str()) == false) {
 		obs_log(LOG_INFO, "Creating directory: %s",

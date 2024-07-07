@@ -160,6 +160,81 @@ obs_hadowplay_strip_executable_extension(const std::string &filename)
 	return filename;
 }
 
+// This function replaces illegal chars in file name by _
+std::string MakeLegalFileName(std::string input)
+{
+	const char *pIn = input.c_str();
+	std::string output = std::string(input.length(), '\0');
+	char *pOut = output.data();
+	char *pRightTrimPos = pOut;
+	int nLen = 0;
+
+	while (*pIn != '\0' && nLen++ < MAX_PATH) {
+		switch (*pIn) {
+		case '<':
+		case '>':
+		case ':':
+		case '"':
+		case '/':
+		case '\\':
+		case '|':
+		case '?':
+		case '*':
+			*pOut = '_';
+			pOut++;
+			break;
+
+		default:
+			if (*pIn != ' ' ||
+			    *output.c_str() != '\0') // trim left spaces
+			{
+				*pOut = *pIn;
+				if (*pOut != '.' &&
+				    *pOut != ' ') // trim right spaces & dots
+					pRightTrimPos = pOut + 1;
+
+				pOut++;
+			}
+			break;
+		}
+		pIn++;
+	}
+
+	*pRightTrimPos = '\0';
+
+	output.erase(output.begin() + (pRightTrimPos - output.c_str()),
+		     output.end());
+
+	static const char *szSpecialNames[22] = {
+		"CON",  "PRN",  "AUX",  "NUL",  "COM1", "COM2", "COM3", "COM4",
+		"COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3",
+		"LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
+
+	size_t nOutStrLen = pRightTrimPos - output.c_str();
+	if (nOutStrLen == 3) {
+		for (int i = 0; i < 4; i++) {
+			if (strcmp(output.c_str(), szSpecialNames[i]) == 0) {
+				output[2] = '_';
+				return output;
+			}
+		}
+	} else if (nOutStrLen == 4) {
+		for (int i = 4; i < 22; i++) {
+			if (strcmp(output.c_str(), szSpecialNames[i]) == 0) {
+				output[3] = '_';
+				return output;
+			}
+		}
+	}
+
+	return output;
+}
+
+std::string obs_hadowplay_cleanup_path_string(const std::string &path)
+{
+	return MakeLegalFileName(path);
+}
+
 bool obs_hadowplay_wstring_ends_with(const std::wstring &string,
 				     const std::wstring &end)
 {
