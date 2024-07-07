@@ -160,6 +160,34 @@ obs_hadowplay_strip_executable_extension(const std::string &filename)
 	return filename;
 }
 
+#include <Shlobj.h>
+
+std::string obs_hadowplay_cleanup_path_string(const std::string &filename)
+{
+	wchar_t *w_filename = nullptr;
+	os_utf8_to_wcs_ptr(filename.c_str(), filename.length(), &w_filename);
+
+	wchar_t *w_output = reinterpret_cast<wchar_t *>(
+		bmalloc(MAX_PATH * sizeof(wchar_t)));
+
+	PathCleanupSpec(w_filename, w_output);
+
+	char *output = nullptr;
+
+	os_wcs_to_utf8_ptr(w_output, wcslen(w_output), &output);
+
+	std::string output_string(output);
+
+	bfree(w_filename);
+	bfree(w_output);
+	bfree(output);
+
+	if (output_string.length() == 0)
+		return std::string("Invalid Product Name");
+
+	return output_string;
+}
+
 bool obs_hadowplay_wstring_ends_with(const std::wstring &string,
 				     const std::wstring &end)
 {
