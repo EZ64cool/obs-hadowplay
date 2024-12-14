@@ -46,6 +46,9 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->automatic_replay_checkbox->setChecked(
 		Config::Inst().m_auto_replay_buffer);
 
+	ui->include_screenshots_checkbox->setChecked(
+		Config::Inst().m_include_screenshots);
+
 	ui->play_notification_sound_checkbox->setChecked(
 		Config::Inst().m_play_notif_sound);
 
@@ -64,6 +67,9 @@ void SettingsDialog::ApplyConfig()
 {
 	Config::Inst().m_auto_replay_buffer =
 		this->ui->automatic_replay_checkbox->isChecked();
+
+	Config::Inst().m_include_screenshots =
+		this->ui->include_screenshots_checkbox->isChecked();
 
 	Config::Inst().m_play_notif_sound =
 		this->ui->play_notification_sound_checkbox->isChecked();
