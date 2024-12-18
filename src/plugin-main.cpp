@@ -449,14 +449,14 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	case OBS_FRONTEND_EVENT_SCREENSHOT_TAKEN: {
 		if (Config::Inst().m_include_screenshots == true) {
 			const char *replay_path_c = obs_frontend_get_last_screenshot();
-	
+
 			if (replay_path_c == NULL) {
 				return;
 			}
-	
+
 			std::string target_name;
 			if (obs_hadowplay_get_captured_name(target_name) == true) {
-	
+
 				obs_hadowplay_move_output_file(replay_path_c,
 								target_name);
 			}
