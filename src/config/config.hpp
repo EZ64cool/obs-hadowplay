@@ -25,7 +25,7 @@ struct Config {
 	void SetDefaults(obs_data_t *data);
 
 	bool m_auto_replay_buffer = true;
-	bool m_folder_name_as_prefix = true;
+	bool m_folder_name_as_prefix = false;
 	bool m_include_screenshots = true;
 	bool m_play_notif_sound = true;
 	bool m_show_desktop_notif = true;
