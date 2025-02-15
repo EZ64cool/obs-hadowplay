@@ -95,7 +95,7 @@ void Config::SetDefaults(obs_data_t *hadowplay_data)
 				  true);
 
 	obs_data_set_default_bool(hadowplay_data, CONFIG_FOLDER_NAME_AS_PREFIX,
-				  true);
+				  false);
 
 	obs_data_set_default_bool(hadowplay_data, CONFIG_PLAY_NOTIF_SOUND,
 				  true);
