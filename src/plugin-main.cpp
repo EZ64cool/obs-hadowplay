@@ -130,7 +130,9 @@ void obs_hadowplay_move_output_file(const std::string &original_filepath,
 	}
 
 	if (Config::Inst().m_folder_name_as_prefix == true) {
-		replay_filename = obs_hadowplay_cleanup_path_string(target_name) + "_" + replay_filename;
+		replay_filename =
+			obs_hadowplay_cleanup_path_string(target_name) + "_" +
+			replay_filename;
 	}
 
 	std::string new_filepath = target_directory + "/" + replay_filename;
