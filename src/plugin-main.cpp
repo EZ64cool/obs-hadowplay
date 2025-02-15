@@ -129,6 +129,12 @@ void obs_hadowplay_move_output_file(const std::string &original_filepath,
 		os_mkdir(target_directory.c_str());
 	}
 
+	if (Config::Inst().m_folder_name_as_prefix == true) {
+		replay_filename =
+			obs_hadowplay_cleanup_path_string(target_name) + "_" +
+			replay_filename;
+	}
+
 	std::string new_filepath = target_directory + "/" + replay_filename;
 
 	obs_log(LOG_INFO, "Renaming files: %s -> %s", original_filepath.c_str(),

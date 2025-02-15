@@ -49,6 +49,9 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->include_screenshots_checkbox->setChecked(
 		Config::Inst().m_include_screenshots);
 
+	ui->folder_name_as_prefix_checkbox->setChecked(
+		Config::Inst().m_folder_name_as_prefix);
+
 	ui->play_notification_sound_checkbox->setChecked(
 		Config::Inst().m_play_notif_sound);
 
@@ -70,6 +73,9 @@ void SettingsDialog::ApplyConfig()
 
 	Config::Inst().m_include_screenshots =
 		this->ui->include_screenshots_checkbox->isChecked();
+
+	Config::Inst().m_folder_name_as_prefix =
+		this->ui->folder_name_as_prefix_checkbox->isChecked();
 
 	Config::Inst().m_play_notif_sound =
 		this->ui->play_notification_sound_checkbox->isChecked();

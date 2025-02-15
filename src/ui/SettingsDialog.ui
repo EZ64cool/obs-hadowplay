@@ -133,6 +133,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="folder_name_as_prefix_checkbox">
+     <property name="text">
+      <string>OBSHadowplay.Settings.FolderNameAsPrefix</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="group_box_global">
      <property name="title">
       <string>OBSHadowplay.Settings.Notifications</string>
