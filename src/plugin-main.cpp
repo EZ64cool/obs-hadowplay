@@ -441,7 +441,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		}
 
 		std::string target_name;
-		if (obs_hadowplay_get_captured_name(target_name) == true) {
+		if (Config::Inst().m_enable_auto_organisation == true &&
+		    obs_hadowplay_get_captured_name(target_name) == true) {
 
 			obs_hadowplay_move_output_file(replay_path_c,
 						       target_name);
@@ -453,7 +454,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 #pragma region Screenshot event
 
 	case OBS_FRONTEND_EVENT_SCREENSHOT_TAKEN: {
-		if (Config::Inst().m_include_screenshots == true) {
+		if (Config::Inst().m_enable_auto_organisation == true &&
+		    Config::Inst().m_include_screenshots == true) {
 			const char *replay_path_c =
 				obs_frontend_get_last_screenshot();
 
@@ -489,6 +491,10 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	}
 
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPED: {
+
+		if (Config::Inst().m_enable_auto_organisation == false) {
+			return;
+		}
 
 		if (recording_target_name.empty() == true) {
 			std::string target_name;

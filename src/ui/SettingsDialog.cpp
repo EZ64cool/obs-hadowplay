@@ -71,6 +71,8 @@ void SettingsDialog::ApplyConfig()
 	Config::Inst().m_auto_replay_buffer =
 		this->ui->automatic_replay_checkbox->isChecked();
 
+	Config::Inst();
+
 	Config::Inst().m_include_screenshots =
 		this->ui->include_screenshots_checkbox->isChecked();
 
