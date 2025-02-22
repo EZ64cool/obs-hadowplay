@@ -59,11 +59,11 @@
            <property name="text">
             <string/>
            </property>
-           <property name="themeID" stdset="0">
-            <string>addIconSmall</string>
-           </property>
            <property name="toolButton" stdset="0">
             <bool>true</bool>
+           </property>
+           <property name="class" stdset="0">
+            <string notr="true">icon-plus</string>
            </property>
           </widget>
          </item>
@@ -75,11 +75,11 @@
            <property name="text">
             <string/>
            </property>
-           <property name="themeID" stdset="0">
-            <string>cogsIcon</string>
-           </property>
            <property name="toolButton" stdset="0">
             <bool>true</bool>
+           </property>
+           <property name="class" stdset="0">
+            <string notr="true">icon-cogs</string>
            </property>
           </widget>
          </item>
@@ -91,11 +91,11 @@
            <property name="text">
             <string/>
            </property>
-           <property name="themeID" stdset="0">
-            <string>removeIconSmall</string>
-           </property>
            <property name="toolButton" stdset="0">
             <bool>true</bool>
+           </property>
+           <property name="class" stdset="0">
+            <string notr="true">icon-trash</string>
            </property>
           </widget>
          </item>
