@@ -20,7 +20,8 @@ struct SystemTrayNotification {
 	QString message;
 };
 
-bool obs_hadowplay_show_notification(std::string &title, std::string &message)
+bool obs_hadowplay_show_notification(const std::string &title,
+				     const std::string &message)
 {
 	if (!QSystemTrayIcon::isSystemTrayAvailable() ||
 	    !QSystemTrayIcon::supportsMessages())

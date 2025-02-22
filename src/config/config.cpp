@@ -18,6 +18,9 @@ void Config::Save(obs_data_t *save_data)
 	obs_data_set_bool(hadowplay_data, CONFIG_AUTOREPLAY_ENABLED,
 			  this->m_auto_replay_buffer);
 
+	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION,
+			  this->m_enable_auto_organisation);
+
 	obs_data_set_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
 			  this->m_include_screenshots);
 
@@ -58,6 +61,9 @@ void Config::Load(obs_data_t *load_data)
 	this->m_auto_replay_buffer =
 		obs_data_get_bool(hadowplay_data, CONFIG_AUTOREPLAY_ENABLED);
 
+	this->m_enable_auto_organisation = obs_data_get_bool(
+		hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION);
+
 	this->m_include_screenshots =
 		obs_data_get_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS);
 
@@ -90,6 +96,9 @@ void Config::SetDefaults(obs_data_t *hadowplay_data)
 {
 	obs_data_set_default_bool(hadowplay_data, CONFIG_AUTOREPLAY_ENABLED,
 				  true);
+
+	obs_data_set_default_bool(hadowplay_data,
+				  CONFIG_ENABLE_AUTO_ORGANISATION, true);
 
 	obs_data_set_default_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
 				  true);

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>397</width>
-    <height>380</height>
+    <width>403</width>
+    <height>520</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -59,11 +59,11 @@
            <property name="text">
             <string/>
            </property>
-           <property name="themeID" stdset="0">
-            <string>addIconSmall</string>
-           </property>
            <property name="toolButton" stdset="0">
             <bool>true</bool>
+           </property>
+           <property name="class" stdset="0">
+            <string notr="true">icon-plus</string>
            </property>
           </widget>
          </item>
@@ -75,11 +75,11 @@
            <property name="text">
             <string/>
            </property>
-           <property name="themeID" stdset="0">
-            <string>cogsIcon</string>
-           </property>
            <property name="toolButton" stdset="0">
             <bool>true</bool>
+           </property>
+           <property name="class" stdset="0">
+            <string notr="true">icon-cogs</string>
            </property>
           </widget>
          </item>
@@ -91,11 +91,11 @@
            <property name="text">
             <string/>
            </property>
-           <property name="themeID" stdset="0">
-            <string>removeIconSmall</string>
-           </property>
            <property name="toolButton" stdset="0">
             <bool>true</bool>
+           </property>
+           <property name="class" stdset="0">
+            <string notr="true">icon-trash</string>
            </property>
           </widget>
          </item>
@@ -126,21 +126,37 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="include_screenshots_checkbox">
-     <property name="text">
-      <string>OBSHadowplay.Settings.IncludeScreenshots</string>
+    <widget class="QGroupBox" name="group_box_organisation">
+     <property name="title">
+      <string>OBSHadowplay.Settings.Organisation</string>
      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <item>
+       <widget class="QCheckBox" name="enable_automatic_organisation_checkbox">
+        <property name="text">
+         <string>OBSHadowplay.Settings.Organisation.EnableAutoOrganisation</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="include_screenshots_checkbox">
+        <property name="text">
+         <string>OBSHadowplay.Settings.Organisation.IncludeScreenshots</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="folder_name_as_prefix_checkbox">
+        <property name="text">
+         <string>OBSHadowplay.Settings.Organisation.FolderNameAsPrefix</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="folder_name_as_prefix_checkbox">
-     <property name="text">
-      <string>OBSHadowplay.Settings.FolderNameAsPrefix</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="group_box_global">
+    <widget class="QGroupBox" name="group_box_notifications">
      <property name="title">
       <string>OBSHadowplay.Settings.Notifications</string>
      </property>

@@ -112,8 +112,8 @@ bool obs_hadowplay_is_replay_controlled = false;
 bool obs_hadowplay_manual_start = false;
 bool obs_hadowplay_manual_stop = false;
 
-void obs_hadowplay_move_output_file(const std::string &original_filepath,
-				    const std::string &target_name)
+std::string obs_hadowplay_move_output_file(const std::string &original_filepath,
+					   const std::string &target_name)
 {
 	const size_t filename_pos = original_filepath.find_last_of("/\\") + 1;
 
@@ -137,17 +137,21 @@ void obs_hadowplay_move_output_file(const std::string &original_filepath,
 
 	std::string new_filepath = target_directory + "/" + replay_filename;
 
-	obs_log(LOG_INFO, "Renaming files: %s -> %s", original_filepath.c_str(),
+	obs_log(LOG_INFO, "Renaming file: %s -> %s", original_filepath.c_str(),
 		new_filepath.c_str());
 	os_rename(original_filepath.c_str(), new_filepath.c_str());
 
-	static std::string title = "Replay Saved";
+	return new_filepath;
+}
 
+void obs_hadowplay_notify_saved(const std::string &title,
+				const std::string &filepath)
+{
 	if (Config::Inst().m_play_notif_sound == true) {
 		obs_hadowplay_play_notif_sound();
 	}
 	if (Config::Inst().m_show_desktop_notif == true) {
-		obs_hadowplay_show_notification(title, new_filepath);
+		obs_hadowplay_show_notification(title, filepath);
 	}
 }
 
@@ -441,11 +445,17 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		}
 
 		std::string target_name;
-		if (obs_hadowplay_get_captured_name(target_name) == true) {
+		if (Config::Inst().m_enable_auto_organisation == true &&
+		    obs_hadowplay_get_captured_name(target_name) == true) {
 
-			obs_hadowplay_move_output_file(replay_path_c,
-						       target_name);
+			std::string new_filepath =
+				obs_hadowplay_move_output_file(replay_path_c,
+							       target_name);
+
+			replay_path_c = new_filepath.c_str();
 		}
+
+		obs_hadowplay_notify_saved("Replay Saved", replay_path_c);
 		break;
 	}
 #pragma endregion
@@ -453,22 +463,30 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 #pragma region Screenshot event
 
 	case OBS_FRONTEND_EVENT_SCREENSHOT_TAKEN: {
-		if (Config::Inst().m_include_screenshots == true) {
-			const char *replay_path_c =
-				obs_frontend_get_last_screenshot();
+		const char *screenshot_path_c =
+			obs_frontend_get_last_screenshot();
 
-			if (replay_path_c == NULL) {
-				return;
-			}
+		if (screenshot_path_c == NULL) {
+			return;
+		}
+
+		if (Config::Inst().m_enable_auto_organisation == true &&
+		    Config::Inst().m_include_screenshots == true) {
 
 			std::string target_name;
 			if (obs_hadowplay_get_captured_name(target_name) ==
 			    true) {
 
-				obs_hadowplay_move_output_file(replay_path_c,
-							       target_name);
+				std::string new_filepath =
+					obs_hadowplay_move_output_file(
+						screenshot_path_c, target_name);
+
+				screenshot_path_c = new_filepath.c_str();
 			}
 		}
+
+		obs_hadowplay_notify_saved("Screenshot Saved",
+					   screenshot_path_c);
 		break;
 	}
 
@@ -489,22 +507,6 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 	}
 
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPED: {
-
-		if (recording_target_name.empty() == true) {
-			std::string target_name;
-
-			if (obs_hadowplay_get_captured_name(target_name) ==
-			    true) {
-				recording_target_name = target_name;
-				obs_log(LOG_INFO, "Recording target found: %s",
-					recording_target_name.c_str());
-			}
-		}
-
-		if (recording_target_name.empty() == true) {
-			return;
-		}
-
 		const char *recording_path_c =
 			obs_frontend_get_last_recording();
 
@@ -512,8 +514,33 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			return;
 		}
 
-		obs_hadowplay_move_output_file(recording_path_c,
-					       recording_target_name);
+		if (Config::Inst().m_enable_auto_organisation == true) {
+
+			if (recording_target_name.empty() == true) {
+				std::string target_name;
+
+				if (obs_hadowplay_get_captured_name(
+					    target_name) == true) {
+					recording_target_name = target_name;
+					obs_log(LOG_INFO,
+						"Recording target found: %s",
+						recording_target_name.c_str());
+				}
+			}
+
+			if (recording_target_name.empty() == false) {
+
+				std::string new_filepath =
+					obs_hadowplay_move_output_file(
+						recording_path_c,
+						recording_target_name);
+
+				recording_path_c = new_filepath.c_str();
+			}
+		}
+
+		obs_hadowplay_notify_saved("Recording Saved", recording_path_c);
+
 		break;
 	}
 #pragma endregion
