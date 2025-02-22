@@ -19,8 +19,8 @@ EXTERNC void obs_hadowplay_play_notif_sound();
 
 EXTERNC bool obs_hadowplay_is_exe_excluded(const char *exe);
 
-EXTERNC bool obs_hadowplay_show_notification(std::string &title,
-					     std::string &message);
+EXTERNC bool obs_hadowplay_show_notification(const std::string &title,
+					     const std::string &message);
 
 EXTERNC bool
 obs_hadowplay_get_product_name_from_source(obs_source_t *source,
