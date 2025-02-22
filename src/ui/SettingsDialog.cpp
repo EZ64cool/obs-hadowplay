@@ -46,6 +46,9 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->automatic_replay_checkbox->setChecked(
 		Config::Inst().m_auto_replay_buffer);
 
+	ui->enable_automatic_organisation_checkbox->setChecked(
+		Config::Inst().m_enable_auto_organisation);
+
 	ui->include_screenshots_checkbox->setChecked(
 		Config::Inst().m_include_screenshots);
 
@@ -70,6 +73,9 @@ void SettingsDialog::ApplyConfig()
 {
 	Config::Inst().m_auto_replay_buffer =
 		this->ui->automatic_replay_checkbox->isChecked();
+
+	Config::Inst().m_enable_auto_organisation =
+		this->ui->enable_automatic_organisation_checkbox->isChecked();
 
 	Config::Inst().m_include_screenshots =
 		this->ui->include_screenshots_checkbox->isChecked();
