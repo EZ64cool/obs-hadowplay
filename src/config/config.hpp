@@ -32,6 +32,6 @@ struct Config {
 	bool m_include_screenshots = true;
 	bool m_play_notif_sound = true;
 	bool m_show_desktop_notif = true;
-	std::string m_notification_file = "";
+	std::string m_notification_file;
 	std::vector<std::string> m_exclusions = std::vector<std::string>();
 };

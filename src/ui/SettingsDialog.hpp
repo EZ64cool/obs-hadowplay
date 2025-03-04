@@ -27,6 +27,8 @@ private slots:
 	void edit_exclusion_pressed();
 	void delete_exclusion_pressed();
 	void exceptions_list_selected_changed();
+	void onNotificationSoundCheckboxToggled(bool checked);
+	void onNotificationSoundFileButtonClicked();
 	void button_box_accepted();
 
 private:
