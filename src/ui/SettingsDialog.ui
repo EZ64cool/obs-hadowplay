@@ -175,6 +175,13 @@
         </property>
        </widget>
       </item>
+	   <item>
+		<widget class="QLineEdit" name="notification_sound_file">
+		 <property name="placeholderText">
+		  <string>OBSHadowplay.Settings.Notifications.NotificationSoundFile</string>
+		 </property>
+		</widget>
+	   </item>
      </layout>
     </widget>
    </item>

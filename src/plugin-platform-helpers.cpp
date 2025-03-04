@@ -5,10 +5,9 @@
 
 extern void obs_hadowplay_play_sound(const wchar_t *filepath);
 
-void obs_hadowplay_play_notif_sound()
+void obs_hadowplay_play_notif_sound(const std::string &filePath)
 {
-	QString filepath = obs_module_file("notification.wav");
-
+	QString filepath = QString::fromStdString(filePath);
 	obs_hadowplay_play_sound(filepath.toStdWString().c_str());
 }
 

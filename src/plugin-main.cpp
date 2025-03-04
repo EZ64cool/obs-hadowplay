@@ -148,7 +148,8 @@ void obs_hadowplay_notify_saved(const std::string &title,
 				const std::string &filepath)
 {
 	if (Config::Inst().m_play_notif_sound == true) {
-		obs_hadowplay_play_notif_sound();
+
+		obs_hadowplay_play_notif_sound(Config::Inst().m_notification_file);
 	}
 	if (Config::Inst().m_show_desktop_notif == true) {
 		obs_hadowplay_show_notification(title, filepath);
@@ -445,12 +446,10 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		}
 
 		std::string target_name;
-		if (Config::Inst().m_enable_auto_organisation == true &&
-		    obs_hadowplay_get_captured_name(target_name) == true) {
 
-			std::string new_filepath =
-				obs_hadowplay_move_output_file(replay_path_c,
-							       target_name);
+		if (Config::Inst().m_enable_auto_organisation == true && obs_hadowplay_get_captured_name(target_name) == true) {
+
+			std::string new_filepath = obs_hadowplay_move_output_file(replay_path_c, target_name);
 
 			replay_path_c = new_filepath.c_str();
 		}

@@ -15,7 +15,7 @@ obs_hadowplay_strip_executable_extension(const std::string &filename);
 
 std::string obs_hadowplay_cleanup_path_string(const std::string &filename);
 
-EXTERNC void obs_hadowplay_play_notif_sound();
+EXTERNC void obs_hadowplay_play_notif_sound(const std::string &filePath);
 
 EXTERNC bool obs_hadowplay_is_exe_excluded(const char *exe);
 

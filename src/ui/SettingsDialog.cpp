@@ -61,6 +61,9 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->show_desktop_notif_checkbox->setChecked(
 		Config::Inst().m_show_desktop_notif);
 
+	ui->notification_sound_file->setText(
+		QString::fromStdString(Config::Inst().m_notification_file));
+
 	ui->exceptions_list->clear();
 	for (size_t i = 0; i < Config::Inst().m_exclusions.size(); ++i) {
 		this->ui->exceptions_list->addItem(
@@ -88,6 +91,9 @@ void SettingsDialog::ApplyConfig()
 
 	Config::Inst().m_show_desktop_notif =
 		this->ui->show_desktop_notif_checkbox->isChecked();
+
+	Config::Inst().m_notification_file =
+		this->ui->notification_sound_file->text().toStdString();
 
 	int count = this->ui->exceptions_list->count();
 
