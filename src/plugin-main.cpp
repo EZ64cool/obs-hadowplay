@@ -191,7 +191,7 @@ bool obs_hadowplay_start_automatic_replay_buffer()
 	return true;
 }
 
-bool obs_hadowplay_stop_automatic_replay_buffer()
+bool obs_hadowplay_stop_automatic_replay_buffer(bool force = false)
 {
 	if (Config::Inst().m_auto_replay_buffer_stop_delay != 0) {
 		obs_hadowplay_time_point current_time =
@@ -217,7 +217,8 @@ bool obs_hadowplay_stop_automatic_replay_buffer()
 		return false;
 
 	// False if manually started
-	if (os_atomic_load_bool(&obs_hadowplay_manual_start) == true)
+	if (os_atomic_load_bool(&obs_hadowplay_manual_start) == true &&
+	    force == false)
 		return false;
 
 	obs_log(LOG_INFO, "Automatic replay stopped");
@@ -479,6 +480,11 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		}
 
 		obs_hadowplay_notify_saved("Replay Saved", replay_path_c);
+
+		if (Config::Inst().m_restart_replay_buffer_on_save == true) {
+			obs_log(LOG_INFO, "Restarting replay buffer");
+			obs_hadowplay_stop_automatic_replay_buffer(true);
+		}
 		break;
 	}
 #pragma endregion
