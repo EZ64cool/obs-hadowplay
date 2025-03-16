@@ -193,7 +193,8 @@ bool obs_hadowplay_start_automatic_replay_buffer()
 
 bool obs_hadowplay_stop_automatic_replay_buffer(bool force = false)
 {
-	if (Config::Inst().m_auto_replay_buffer_stop_delay != 0) {
+	if (Config::Inst().m_auto_replay_buffer_stop_delay != 0 &&
+	    force == false) {
 		obs_hadowplay_time_point current_time =
 			std::chrono::steady_clock::now();
 

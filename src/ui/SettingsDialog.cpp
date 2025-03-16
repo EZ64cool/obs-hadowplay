@@ -16,6 +16,11 @@ SettingsDialog::SettingsDialog() : QDialog(nullptr), ui(new Ui::SettingsDialog)
 	// Remove the ? button on dialogs on Windows
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
+	// Set the warning icon
+	QSize pixmapSize = QSize(16, 16);
+	QIcon icon = style()->standardIcon(QStyle::SP_MessageBoxWarning);
+	ui->reset_on_save_info_icon->setPixmap(icon.pixmap(pixmapSize));
+
 	connect(ui->button_box, &QDialogButtonBox::accepted, this,
 		&SettingsDialog::button_box_accepted);
 
