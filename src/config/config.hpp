@@ -2,6 +2,7 @@
 
 #define CONFIG_AUTOREPLAY_ENABLED "AutoReplayEnabled"
 #define CONFIG_AUTOREPLY_BUFFER_STOP_DELAY "AutoReplayBufferStopDelay"
+#define CONFIG_AUTOREPLY_RESET_ON_SAVE "AutoReplayResetOnSave"
 #define CONFIG_PLAY_NOTIF_SOUND "PlayNotifSound"
 #define CONFIG_SHOW_DESKTOP_NOTIF "ShowDesktopNotif"
 #define CONFIG_ENABLE_AUTO_ORGANISATION "EnableAutoOrganisation"
