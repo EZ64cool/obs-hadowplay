@@ -28,8 +28,7 @@ struct Config {
 
 	bool m_auto_replay_buffer = true;
 	int m_auto_replay_buffer_stop_delay = 0;
-	bool m_restart_replay_buffer_on_save =
-		true; // True for testing, set to false
+	bool m_restart_replay_buffer_on_save = false;
 	bool m_enable_auto_organisation = true;
 	bool m_folder_name_as_prefix = false;
 	bool m_include_screenshots = true;
