@@ -2,6 +2,7 @@
 
 #define CONFIG_AUTOREPLAY_ENABLED "AutoReplayEnabled"
 #define CONFIG_AUTOREPLY_BUFFER_STOP_DELAY "AutoReplayBufferStopDelay"
+#define CONFIG_AUTOREPLY_RESET_ON_SAVE "AutoReplayResetOnSave"
 #define CONFIG_PLAY_NOTIF_SOUND "PlayNotifSound"
 #define CONFIG_SHOW_DESKTOP_NOTIF "ShowDesktopNotif"
 #define CONFIG_ENABLE_AUTO_ORGANISATION "EnableAutoOrganisation"
@@ -28,6 +29,7 @@ struct Config {
 
 	bool m_auto_replay_buffer = true;
 	int m_auto_replay_buffer_stop_delay = 0;
+	bool m_restart_replay_buffer_on_save = false;
 	bool m_enable_auto_organisation = true;
 	bool m_folder_name_as_prefix = false;
 	bool m_include_screenshots = true;
