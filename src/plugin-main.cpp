@@ -173,6 +173,9 @@ bool obs_hadowplay_start_automatic_replay_buffer()
 
 	obs_output_release(replay_output);
 
+	// Reset stop time point
+	requested_stop = obs_hadowplay_time_point();
+
 	// False if already running
 	if (obs_frontend_replay_buffer_active() == true)
 		return false;
@@ -182,8 +185,6 @@ bool obs_hadowplay_start_automatic_replay_buffer()
 		return false;
 
 	obs_log(LOG_INFO, "Automatic replay started");
-
-	requested_stop = obs_hadowplay_time_point();
 	os_atomic_store_bool(&obs_hadowplay_is_replay_controlled, true);
 	obs_frontend_replay_buffer_start();
 
@@ -197,6 +198,7 @@ bool obs_hadowplay_stop_automatic_replay_buffer()
 			std::chrono::steady_clock::now();
 
 		if (requested_stop.time_since_epoch().count() == 0) {
+			// Start point for delay timer
 			requested_stop = current_time;
 			return false;
 		} else if (std::chrono::duration_cast<std::chrono::seconds>(
