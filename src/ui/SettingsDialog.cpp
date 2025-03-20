@@ -54,6 +54,9 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->buffer_stop_delay_spinbox->setValue(
 		Config::Inst().m_auto_replay_buffer_stop_delay);
 
+	ui->reset_buffer_on_save_checkbox->setChecked(
+		Config::Inst().m_restart_replay_buffer_on_save);
+
 	ui->enable_automatic_organisation_checkbox->setChecked(
 		Config::Inst().m_enable_auto_organisation);
 
@@ -84,6 +87,9 @@ void SettingsDialog::ApplyConfig()
 
 	Config::Inst().m_auto_replay_buffer_stop_delay =
 		this->ui->buffer_stop_delay_spinbox->value();
+
+	Config::Inst().m_restart_replay_buffer_on_save =
+		this->ui->reset_buffer_on_save_checkbox->isChecked();
 
 	Config::Inst().m_enable_auto_organisation =
 		this->ui->enable_automatic_organisation_checkbox->isChecked();
