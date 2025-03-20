@@ -230,6 +230,49 @@ bool obs_hadowplay_stop_automatic_replay_buffer(bool force = false)
 	return true;
 }
 
+void obs_hadowplay_default_replay_buffer_event_callback(
+	enum obs_frontend_event event, void *private_data);
+
+void obs_hadowplay_replay_buffer_deactivated(void *data, calldata_t *calldata)
+{
+	obs_frontend_add_event_callback(
+		obs_hadowplay_default_replay_buffer_event_callback, NULL);
+
+	obs_output_t *output = (obs_output_t *)calldata_ptr(calldata, "output");
+
+	signal_handler_t *signal_handler =
+		obs_output_get_signal_handler(output);
+
+	signal_handler_disconnect(signal_handler, "deactivate",
+				  &obs_hadowplay_replay_buffer_deactivated,
+				  nullptr);
+
+	obs_log(LOG_INFO, "Replay buffer successfully restarted");
+
+	obs_frontend_replay_buffer_start();
+}
+
+void obs_hadowplay_restart_replay_buffer()
+{
+	obs_log(LOG_INFO, "Restarting replay buffer");
+
+	obs_frontend_remove_event_callback(
+		obs_hadowplay_default_replay_buffer_event_callback, NULL);
+
+	obs_output_t *replay_buffer = obs_frontend_get_replay_buffer_output();
+
+	signal_handler_t *signal_handler =
+		obs_output_get_signal_handler(replay_buffer);
+
+	signal_handler_connect(signal_handler, "deactivate",
+			       &obs_hadowplay_replay_buffer_deactivated,
+			       nullptr);
+
+	obs_output_force_stop(replay_buffer);
+
+	obs_output_release(replay_buffer);
+}
+
 extern void obs_hadowplay_replay_buffer_stop()
 {
 	obs_hadowplay_stop_automatic_replay_buffer();
@@ -427,20 +470,15 @@ void obs_hadowplay_initialise()
 			       &obs_hadowplay_source_deactivated, nullptr);
 }
 
-std::string recording_target_name;
-
-void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
-					   void *private_data)
+void obs_hadowplay_default_replay_buffer_event_callback(
+	enum obs_frontend_event event, void *private_data)
 {
 	UNUSED_PARAMETER(private_data);
 
 	switch (event) {
-	case OBS_FRONTEND_EVENT_FINISHED_LOADING: {
-		obs_hadowplay_initialise_update_thread();
-		break;
-	}
 
 #pragma region Replay events
+
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED: {
 		if (os_atomic_load_bool(&obs_hadowplay_is_replay_controlled) ==
 		    true) {
@@ -483,12 +521,27 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 		obs_hadowplay_notify_saved("Replay Saved", replay_path_c);
 
 		if (Config::Inst().m_restart_replay_buffer_on_save == true) {
-			obs_log(LOG_INFO, "Restarting replay buffer");
-			obs_hadowplay_stop_automatic_replay_buffer(true);
+			obs_hadowplay_restart_replay_buffer();
 		}
 		break;
 	}
+
 #pragma endregion
+	}
+}
+
+std::string recording_target_name;
+
+void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
+					   void *private_data)
+{
+	UNUSED_PARAMETER(private_data);
+
+	switch (event) {
+	case OBS_FRONTEND_EVENT_FINISHED_LOADING: {
+		obs_hadowplay_initialise_update_thread();
+		break;
+	}
 
 #pragma region Screenshot event
 
@@ -616,6 +669,9 @@ bool obs_module_load(void)
 
 	obs_frontend_add_event_callback(obs_hadowplay_frontend_event_callback,
 					NULL);
+
+	obs_frontend_add_event_callback(
+		obs_hadowplay_default_replay_buffer_event_callback, NULL);
 
 	obs_frontend_push_ui_translation(obs_module_get_string);
 
