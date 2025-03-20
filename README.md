@@ -7,27 +7,32 @@ In an attempt to move away from ShadowPlay and it's lack of customization, I tho
 This includes automatic replay buffer start/stop based on hooked captures within the active scene and the organisation of replays/recordings into folders named after the capture subject.
 
 ## Changelog
-* v2.0.5
+* v2.2.1
+  * Added a configurable replay buffer stop delay
+  * Added an option to restart the replay buffer on save
+
+
+* v2.1.0 (2.0.4)
+  * Added an option to organise screenshots
+  * Added an option add discovered target name as a filename prefix
+  * Added an option to disable automatic file organisation all together
+
+
+* v2.0.3
   * Now works with all types of window-capture and game-capture
   * Improved capture subject name retrieval
     * No longer relies on enumerating fullscreen apps.
     * Grabs the top active capture's Product Description, Product Name or exe name at the time of saving.
     * Exceptions now only need to target applications that can be captured.
   * Added user settings under the Tools menu
-    * Replay buffer settings
-      * Automatic replay buffer can be toggled off
-      * Configure automatic stop delay in seconds
-      * Toggle replay buffer restart on saving
-    * Organisation settings
-      * Automatic file organisation can be toggled off
-      * Toggle organisation of screenshots
-      * Toggle using the discovered process name as the file prefix
+    * Automatic replay buffer can now be toggled off
     * Settings are saved at the scene collection level
   * No longer starts recording if all running fullscreen windows are excluded
     * User exclusions can be added through the settings menu
   * Added notifications when recordings are saved
     * Both sound and dekstop notifications can be toggled through the settings menu
   * Automatic replay now checks inside groups and scene references for game-captures
+
 
 * v1.1.3
   * Added automatic replay organisation
