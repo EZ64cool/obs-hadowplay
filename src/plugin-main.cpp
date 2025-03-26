@@ -112,6 +112,34 @@ bool obs_hadowplay_is_replay_controlled = false;
 bool obs_hadowplay_manual_start = false;
 bool obs_hadowplay_manual_stop = false;
 
+template<typename... Args>
+std::string obs_hadowplay_string_format(const std::string &format, Args... args)
+{
+	int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) +
+		     1; // Extra space for '\0'
+	auto size = static_cast<size_t>(size_s);
+	std::unique_ptr<char[]> buf(new char[size]);
+	std::snprintf(buf.get(), size, format.c_str(), args...);
+	return std::string(buf.get(),
+			   buf.get() + size -
+				   1); // We don't want the '\0' inside
+}
+
+std::string
+obs_hadowplay_format_output_filename(const std::string &original_filename,
+				     const std::string &target_name)
+{
+	if (Config::Inst().m_use_custom_filename_format == true) {
+		return obs_hadowplay_cleanup_path_string(
+			obs_hadowplay_string_format(
+				Config::Inst().m_organised_filename_format,
+				obs_hadowplay_cleanup_path_string(target_name),
+				original_filename));
+	} else {
+		return original_filename;
+	}
+}
+
 std::string obs_hadowplay_move_output_file(const std::string &original_filepath,
 					   const std::string &target_name)
 {
@@ -126,20 +154,23 @@ std::string obs_hadowplay_move_output_file(const std::string &original_filepath,
 	if (os_file_exists(target_directory.c_str()) == false) {
 		obs_log(LOG_INFO, "Creating directory: %s",
 			target_directory.c_str());
-		os_mkdir(target_directory.c_str());
+		if (os_mkdir(target_directory.c_str()) != 0) {
+			obs_log(LOG_ERROR,
+				"Failed to create directory: errno %i", errno);
+		}
 	}
 
-	if (Config::Inst().m_folder_name_as_prefix == true) {
-		replay_filename =
-			obs_hadowplay_cleanup_path_string(target_name) + "_" +
-			replay_filename;
-	}
+	replay_filename = obs_hadowplay_format_output_filename(replay_filename,
+							       target_name);
 
 	std::string new_filepath = target_directory + "/" + replay_filename;
 
 	obs_log(LOG_INFO, "Renaming file: %s -> %s", original_filepath.c_str(),
 		new_filepath.c_str());
-	os_rename(original_filepath.c_str(), new_filepath.c_str());
+
+	if (os_rename(original_filepath.c_str(), new_filepath.c_str()) != 0) {
+		obs_log(LOG_ERROR, "Failed to rename file: errno %i", errno);
+	}
 
 	return new_filepath;
 }
