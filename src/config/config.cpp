@@ -27,11 +27,14 @@ void Config::Save(obs_data_t *save_data)
 	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION,
 			  this->m_enable_auto_organisation);
 
+	obs_data_set_bool(hadowplay_data, CONFIG_USE_CUSTOM_FILENAME_FORMAT,
+			  this->m_use_custom_filename_format);
+
+	obs_data_set_string(hadowplay_data, CONFIG_ORGANISED_FILENAME_FORMAT,
+			    this->m_organised_filename_format.c_str());
+
 	obs_data_set_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
 			  this->m_include_screenshots);
-
-	obs_data_set_bool(hadowplay_data, CONFIG_FOLDER_NAME_AS_PREFIX,
-			  this->m_folder_name_as_prefix);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_PLAY_NOTIF_SOUND,
 			  this->m_play_notif_sound);
@@ -51,6 +54,17 @@ void Config::Save(obs_data_t *save_data)
 	obs_data_set_array(hadowplay_data, CONFIG_EXCLUSIONS, exclusions);
 
 	obs_data_set_obj(save_data, PLUGIN_NAME, hadowplay_data);
+}
+
+void Config::LoadBackwardsCompatability(obs_data_t *hadowplay_data)
+{
+	bool folder_name_as_prefix =
+		obs_data_get_bool(hadowplay_data, CONFIG_FOLDER_NAME_AS_PREFIX);
+
+	if (folder_name_as_prefix) {
+		this->m_use_custom_filename_format = true;
+		this->m_organised_filename_format = "{0}_{1}";
+	}
 }
 
 void Config::Load(obs_data_t *load_data)
@@ -76,11 +90,11 @@ void Config::Load(obs_data_t *load_data)
 	this->m_enable_auto_organisation = obs_data_get_bool(
 		hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION);
 
+	this->m_organised_filename_format = obs_data_get_string(
+		hadowplay_data, CONFIG_ORGANISED_FILENAME_FORMAT);
+
 	this->m_include_screenshots =
 		obs_data_get_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS);
-
-	this->m_folder_name_as_prefix =
-		obs_data_get_bool(hadowplay_data, CONFIG_FOLDER_NAME_AS_PREFIX);
 
 	this->m_play_notif_sound =
 		obs_data_get_bool(hadowplay_data, CONFIG_PLAY_NOTIF_SOUND);
@@ -100,6 +114,8 @@ void Config::Load(obs_data_t *load_data)
 			obs_data_get_string(item, CONFIG_EXCLUSION_ITEM_STRING);
 		this->m_exclusions.push_back(std::string(app_name));
 	}
+
+	this->LoadBackwardsCompatability(hadowplay_data);
 }
 
 static const char *default_exclusions[] = {"vlc", "plex", NULL};
@@ -118,11 +134,11 @@ void Config::SetDefaults(obs_data_t *hadowplay_data)
 	obs_data_set_default_bool(hadowplay_data,
 				  CONFIG_ENABLE_AUTO_ORGANISATION, true);
 
-	obs_data_set_default_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
-				  true);
+	obs_data_set_default_bool(hadowplay_data,
+				  CONFIG_USE_CUSTOM_FILENAME_FORMAT, false);
 
-	obs_data_set_default_bool(hadowplay_data, CONFIG_FOLDER_NAME_AS_PREFIX,
-				  false);
+	obs_data_set_default_string(
+		hadowplay_data, CONFIG_ORGANISED_FILENAME_FORMAT, "{0}-{1}");
 
 	obs_data_set_default_bool(hadowplay_data, CONFIG_PLAY_NOTIF_SOUND,
 				  true);
