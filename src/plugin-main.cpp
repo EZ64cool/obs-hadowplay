@@ -118,7 +118,7 @@ std::string obs_hadowplay_string_format(const std::string &format, Args... args)
 	int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) +
 		     1; // Extra space for '\0'
 	auto size = static_cast<size_t>(size_s);
-	std::unique_ptr<char[]> buf(new char[size]);
+	std::unique_ptr<char[]> buf(new char[size]{});
 	std::snprintf(buf.get(), size, format.c_str(), args...);
 	return std::string(buf.get(),
 			   buf.get() + size -
@@ -130,11 +130,37 @@ obs_hadowplay_format_output_filename(const std::string &original_filename,
 				     const std::string &target_name)
 {
 	if (Config::Inst().m_use_custom_filename_format == true) {
+		std::string extension =
+			os_get_path_extension(original_filename.c_str());
+
+		size_t extension_start = original_filename.rfind(extension);
+
+		std::string original_name =
+			original_filename.substr(0, extension_start);
+
+		const static std::string stringReplacement = std::string("%s");
+
+		std::string format =
+			stringReplacement +
+			Config::Inst().m_custom_filename_seperator +
+			stringReplacement;
+
+		// Default FilenameArrangment of TargetBefore
+		std::string first_argument =
+			obs_hadowplay_cleanup_path_string(target_name);
+		std::string second_argument = original_name;
+
+		if (Config::Inst().m_custom_filename_arrangement ==
+		    TargetAfter) {
+			second_argument = first_argument;
+			first_argument = original_name;
+		}
+
 		return obs_hadowplay_cleanup_path_string(
-			obs_hadowplay_string_format(
-				Config::Inst().m_organised_filename_format,
-				obs_hadowplay_cleanup_path_string(target_name),
-				original_filename));
+			obs_hadowplay_string_format(format,
+						    first_argument.c_str(),
+						    second_argument.c_str())
+				.append(extension));
 	} else {
 		return original_filename;
 	}
@@ -157,6 +183,9 @@ std::string obs_hadowplay_move_output_file(const std::string &original_filepath,
 		if (os_mkdir(target_directory.c_str()) != 0) {
 			obs_log(LOG_ERROR,
 				"Failed to create directory: errno %i", errno);
+		} else {
+			obs_log(LOG_INFO, "Succesfully created directory: %s",
+				target_directory.c_str());
 		}
 	}
 
@@ -170,6 +199,9 @@ std::string obs_hadowplay_move_output_file(const std::string &original_filepath,
 
 	if (os_rename(original_filepath.c_str(), new_filepath.c_str()) != 0) {
 		obs_log(LOG_ERROR, "Failed to rename file: errno %i", errno);
+	} else {
+		obs_log(LOG_INFO, "Successfully renamed file: %s -> %s",
+			original_filepath.c_str(), new_filepath.c_str());
 	}
 
 	return new_filepath;
@@ -539,7 +571,7 @@ void obs_hadowplay_default_replay_buffer_event_callback(
 		}
 
 		std::string target_name;
-		if (Config::Inst().m_enable_auto_organisation == true &&
+		if (Config::Inst().m_enable_folder_organisation == true &&
 		    obs_hadowplay_get_captured_name(target_name) == true) {
 
 			std::string new_filepath =
@@ -584,7 +616,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			return;
 		}
 
-		if (Config::Inst().m_enable_auto_organisation == true &&
+		if (Config::Inst().m_enable_folder_organisation == true &&
 		    Config::Inst().m_include_screenshots == true) {
 
 			std::string target_name;
@@ -628,7 +660,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			return;
 		}
 
-		if (Config::Inst().m_enable_auto_organisation == true) {
+		if (Config::Inst().m_enable_folder_organisation == true) {
 
 			if (recording_target_name.empty() == true) {
 				std::string target_name;

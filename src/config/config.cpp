@@ -25,13 +25,16 @@ void Config::Save(obs_data_t *save_data)
 			  this->m_restart_replay_buffer_on_save);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION,
-			  this->m_enable_auto_organisation);
+			  this->m_enable_folder_organisation);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_USE_CUSTOM_FILENAME_FORMAT,
 			  this->m_use_custom_filename_format);
 
-	obs_data_set_string(hadowplay_data, CONFIG_ORGANISED_FILENAME_FORMAT,
-			    this->m_organised_filename_format.c_str());
+	obs_data_set_int(hadowplay_data, CONFIG_CUSTOM_FILENAME_SEPERATOR,
+			 this->m_custom_filename_seperator);
+
+	obs_data_set_int(hadowplay_data, CONFIG_CUSTOM_FILENAME_ARRANGEMENT,
+			 this->m_custom_filename_arrangement);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
 			  this->m_include_screenshots);
@@ -63,7 +66,8 @@ void Config::LoadBackwardsCompatability(obs_data_t *hadowplay_data)
 
 	if (folder_name_as_prefix) {
 		this->m_use_custom_filename_format = true;
-		this->m_organised_filename_format = "{0}_{1}";
+		this->m_custom_filename_seperator = '_';
+		this->m_custom_filename_arrangement = TargetBefore;
 	}
 }
 
@@ -87,11 +91,18 @@ void Config::Load(obs_data_t *load_data)
 	this->m_restart_replay_buffer_on_save = obs_data_get_bool(
 		hadowplay_data, CONFIG_AUTOREPLY_RESET_ON_SAVE);
 
-	this->m_enable_auto_organisation = obs_data_get_bool(
+	this->m_enable_folder_organisation = obs_data_get_bool(
 		hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION);
 
-	this->m_organised_filename_format = obs_data_get_string(
-		hadowplay_data, CONFIG_ORGANISED_FILENAME_FORMAT);
+	this->m_use_custom_filename_format = obs_data_get_bool(
+		hadowplay_data, CONFIG_USE_CUSTOM_FILENAME_FORMAT);
+
+	this->m_custom_filename_seperator = (char)obs_data_get_int(
+		hadowplay_data, CONFIG_CUSTOM_FILENAME_SEPERATOR);
+
+	this->m_custom_filename_arrangement =
+		(FilenameArrangement)obs_data_get_int(
+			hadowplay_data, CONFIG_CUSTOM_FILENAME_ARRANGEMENT);
 
 	this->m_include_screenshots =
 		obs_data_get_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS);
@@ -135,10 +146,14 @@ void Config::SetDefaults(obs_data_t *hadowplay_data)
 				  CONFIG_ENABLE_AUTO_ORGANISATION, true);
 
 	obs_data_set_default_bool(hadowplay_data,
-				  CONFIG_USE_CUSTOM_FILENAME_FORMAT, false);
+				  CONFIG_USE_CUSTOM_FILENAME_FORMAT, true);
 
-	obs_data_set_default_string(
-		hadowplay_data, CONFIG_ORGANISED_FILENAME_FORMAT, "{0}-{1}");
+	obs_data_set_default_string(hadowplay_data,
+				    CONFIG_CUSTOM_FILENAME_SEPERATOR, "-");
+
+	obs_data_set_default_int(hadowplay_data,
+				 CONFIG_CUSTOM_FILENAME_ARRANGEMENT,
+				 TargetBefore);
 
 	obs_data_set_default_bool(hadowplay_data, CONFIG_PLAY_NOTIF_SOUND,
 				  true);
