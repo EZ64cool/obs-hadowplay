@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>487</width>
-    <height>600</height>
+    <width>544</width>
+    <height>641</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -120,11 +120,44 @@
    </item>
    <item>
     <widget class="QGroupBox" name="group_box_buffer">
+     <property name="toolTip">
+      <string>OBSHadowplay.Settings.ReplayBuffer.EnableAutomaticStartStop</string>
+     </property>
      <property name="title">
       <string>OBSHadowplay.Settings.ReplayBuffer</string>
      </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
      <layout class="QGridLayout" name="gridLayout" columnstretch="0,1" columnminimumwidth="100,0">
-      <item row="2" column="0">
+      <item row="0" column="1">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>OBSHadowplay.Settings.ReplayBuffer.StopDelay</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QSpinBox" name="buffer_stop_delay_spinbox">
+        <property name="suffix">
+         <string>s</string>
+        </property>
+        <property name="maximum">
+         <number>999999999</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="reset_buffer_on_save_label">
+        <property name="text">
+         <string>OBSHadowplay.Settings.ReplayBuffer.ResetOnSave</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>icon-trash</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QCheckBox" name="reset_buffer_on_save_checkbox">
@@ -145,52 +178,14 @@
         </item>
        </layout>
       </item>
-      <item row="1" column="0">
-       <widget class="QSpinBox" name="buffer_stop_delay_spinbox">
-        <property name="suffix">
-         <string>s</string>
-        </property>
-        <property name="maximum">
-         <number>999999999</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>OBSHadowplay.Settings.ReplayBuffer.EnableAutomaticStartStop</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>OBSHadowplay.Settings.ReplayBuffer.StopDelay</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="automatic_replay_checkbox">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="reset_buffer_on_save_label">
-        <property name="text">
-         <string>OBSHadowplay.Settings.ReplayBuffer.ResetOnSave</string>
-        </property>
-        <property name="class" stdset="0">
-         <string>icon-trash</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
    <item>
     <widget class="QGroupBox" name="group_box_organisation">
+     <property name="toolTip">
+      <string>OBSHadowplay.Settings.Organisation.EnableAutoOrganisation</string>
+     </property>
      <property name="title">
       <string>OBSHadowplay.Settings.Organisation</string>
      </property>
@@ -198,33 +193,12 @@
       <bool>false</bool>
      </property>
      <property name="checkable">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1" columnminimumwidth="100,0">
       <property name="leftMargin">
        <number>9</number>
       </property>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>OBSHadowplay.Settings.Organisation.FolderNameAsPrefix</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="enable_automatic_organisation_checkbox">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="folder_name_as_prefix_checkbox">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="1">
        <widget class="QLabel" name="label_4">
         <property name="text">
@@ -232,17 +206,70 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>OBSHadowplay.Settings.Organisation.EnableAutoOrganisation</string>
+      <item row="2" column="0" colspan="2">
+       <widget class="QGroupBox" name="custom_filename_groupbox">
+        <property name="toolTip">
+         <string>OBSHadowplay.Settings.Organisation.CustomFilename.EnableCustomFilename</string>
         </property>
+        <property name="title">
+         <string>OBSHadowplay.Settings.Organisation.CustomFilename</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4" columnminimumwidth="90,0">
+         <item row="1" column="0">
+          <widget class="QComboBox" name="custom_filename_format_arrangement">
+           <property name="editable">
+            <bool>false</bool>
+           </property>
+           <property name="currentIndex">
+            <number>-1</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLineEdit" name="custom_filename_separator_textbox">
+           <property name="clearButtonEnabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>OBSHadowplay.Settings.Organisation.CustomFilename.Separator</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>OBSHadowplay.Settings.Organisation.CustomFilename.Arrangement</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item row="1" column="0">
        <widget class="QCheckBox" name="include_screenshots_checkbox">
         <property name="text">
          <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="folder_organisation_checkbox">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>OBSHadowplay.Settings.Organisation.EnableFolderOrganisation</string>
         </property>
        </widget>
       </item>
@@ -253,6 +280,9 @@
     <widget class="QGroupBox" name="group_box_notifications">
      <property name="title">
       <string>OBSHadowplay.Settings.Notifications</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1" columnminimumwidth="100,0">
       <property name="sizeConstraint">

@@ -21,6 +21,15 @@ SettingsDialog::SettingsDialog() : QDialog(nullptr), ui(new Ui::SettingsDialog)
 	QIcon icon = style()->standardIcon(QStyle::SP_MessageBoxWarning);
 	ui->reset_on_save_info_icon->setPixmap(icon.pixmap(pixmapSize));
 
+	QRegularExpression regEx("[^\\<\\>\\:\"\\/\\\\|\?\\*]");
+	QRegularExpressionValidator *validator =
+		new QRegularExpressionValidator(this);
+	validator->setRegularExpression(regEx);
+	ui->custom_filename_separator_textbox->setValidator(validator);
+
+	ui->custom_filename_format_arrangement->addItem("Target Before");
+	ui->custom_filename_format_arrangement->addItem("Target After");
+
 	connect(ui->button_box, &QDialogButtonBox::accepted, this,
 		&SettingsDialog::button_box_accepted);
 
@@ -48,8 +57,7 @@ void SettingsDialog::showEvent(QShowEvent *event)
 {
 	UNUSED_PARAMETER(event);
 
-	ui->automatic_replay_checkbox->setChecked(
-		Config::Inst().m_auto_replay_buffer);
+	ui->group_box_buffer->setChecked(Config::Inst().m_auto_replay_buffer);
 
 	ui->buffer_stop_delay_spinbox->setValue(
 		Config::Inst().m_auto_replay_buffer_stop_delay);
@@ -57,14 +65,23 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->reset_buffer_on_save_checkbox->setChecked(
 		Config::Inst().m_restart_replay_buffer_on_save);
 
-	ui->enable_automatic_organisation_checkbox->setChecked(
+	ui->group_box_organisation->setChecked(
 		Config::Inst().m_enable_auto_organisation);
+
+	ui->folder_organisation_checkbox->setChecked(
+		Config::Inst().m_enable_folder_organisation);
 
 	ui->include_screenshots_checkbox->setChecked(
 		Config::Inst().m_include_screenshots);
 
-	ui->folder_name_as_prefix_checkbox->setChecked(
-		Config::Inst().m_folder_name_as_prefix);
+	ui->custom_filename_groupbox->setChecked(
+		Config::Inst().m_use_custom_filename_format);
+
+	ui->custom_filename_separator_textbox->setText(
+		QString(Config::Inst().m_custom_filename_seperator));
+
+	ui->custom_filename_format_arrangement->setCurrentIndex(
+		Config::Inst().m_custom_filename_arrangement);
 
 	ui->play_notification_sound_checkbox->setChecked(
 		Config::Inst().m_play_notif_sound);
@@ -83,7 +100,7 @@ extern void obs_hadowplay_replay_buffer_stop();
 void SettingsDialog::ApplyConfig()
 {
 	Config::Inst().m_auto_replay_buffer =
-		this->ui->automatic_replay_checkbox->isChecked();
+		this->ui->group_box_buffer->isChecked();
 
 	Config::Inst().m_auto_replay_buffer_stop_delay =
 		this->ui->buffer_stop_delay_spinbox->value();
@@ -92,13 +109,30 @@ void SettingsDialog::ApplyConfig()
 		this->ui->reset_buffer_on_save_checkbox->isChecked();
 
 	Config::Inst().m_enable_auto_organisation =
-		this->ui->enable_automatic_organisation_checkbox->isChecked();
+		this->ui->group_box_organisation->isChecked();
+
+	Config::Inst().m_enable_folder_organisation =
+		this->ui->folder_organisation_checkbox->isChecked();
 
 	Config::Inst().m_include_screenshots =
 		this->ui->include_screenshots_checkbox->isChecked();
 
-	Config::Inst().m_folder_name_as_prefix =
-		this->ui->folder_name_as_prefix_checkbox->isChecked();
+	Config::Inst().m_use_custom_filename_format =
+		this->ui->custom_filename_groupbox->isChecked();
+
+	char separator = '_';
+	std::string separatorString =
+		this->ui->custom_filename_separator_textbox->text()
+			.toStdString();
+	if (!separatorString.empty() && separatorString[0] != '\0') {
+		separator = separatorString[0];
+	}
+
+	Config::Inst().m_custom_filename_seperator = separator;
+
+	Config::Inst().m_custom_filename_arrangement =
+		(FilenameArrangement)
+			ui->custom_filename_format_arrangement->currentIndex();
 
 	Config::Inst().m_play_notif_sound =
 		this->ui->play_notification_sound_checkbox->isChecked();
