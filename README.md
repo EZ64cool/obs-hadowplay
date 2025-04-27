@@ -7,6 +7,11 @@ In an attempt to move away from ShadowPlay and it's lack of customization, I tho
 This includes automatic replay buffer start/stop based on hooked captures within the active scene and the organisation of replays/recordings into folders named after the capture subject.
 
 ## Changelog
+* v2.3.0
+  * Added configurable organised filename formats
+  * Added toggle for folder organisation
+  * Added some extra logging around file moving and folder creation
+
 * v2.2.1
   * Added a configurable replay buffer stop delay
   * Added an option to restart the replay buffer on save
