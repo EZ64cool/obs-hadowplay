@@ -24,14 +24,14 @@ void Config::Save(obs_data_t *save_data)
 	obs_data_set_bool(hadowplay_data, CONFIG_AUTOREPLY_RESET_ON_SAVE,
 			  this->m_restart_replay_buffer_on_save);
 
+	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION,
+			  this->m_enable_auto_organisation);
+
 	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_FOLDER_ORGANISATION,
 			  this->m_enable_folder_organisation);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
 			  this->m_include_screenshots);
-
-	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION,
-			  this->m_enable_auto_organisation);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_USE_CUSTOM_FILENAME_FORMAT,
 			  this->m_use_custom_filename_format);
