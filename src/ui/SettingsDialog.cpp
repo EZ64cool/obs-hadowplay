@@ -65,6 +65,9 @@ void SettingsDialog::showEvent(QShowEvent *event)
 	ui->reset_buffer_on_save_checkbox->setChecked(
 		Config::Inst().m_restart_replay_buffer_on_save);
 
+	ui->group_box_organisation->setChecked(
+		Config::Inst().m_enable_auto_organisation);
+
 	ui->folder_organisation_checkbox->setChecked(
 		Config::Inst().m_enable_folder_organisation);
 
@@ -104,6 +107,9 @@ void SettingsDialog::ApplyConfig()
 
 	Config::Inst().m_restart_replay_buffer_on_save =
 		this->ui->reset_buffer_on_save_checkbox->isChecked();
+
+	Config::Inst().m_enable_auto_organisation =
+		this->ui->group_box_organisation->isChecked();
 
 	Config::Inst().m_enable_folder_organisation =
 		this->ui->folder_organisation_checkbox->isChecked();

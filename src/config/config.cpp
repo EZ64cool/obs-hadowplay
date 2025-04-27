@@ -24,8 +24,14 @@ void Config::Save(obs_data_t *save_data)
 	obs_data_set_bool(hadowplay_data, CONFIG_AUTOREPLY_RESET_ON_SAVE,
 			  this->m_restart_replay_buffer_on_save);
 
-	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION,
+	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_FOLDER_ORGANISATION,
 			  this->m_enable_folder_organisation);
+
+	obs_data_set_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
+			  this->m_include_screenshots);
+
+	obs_data_set_bool(hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION,
+			  this->m_enable_auto_organisation);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_USE_CUSTOM_FILENAME_FORMAT,
 			  this->m_use_custom_filename_format);
@@ -35,9 +41,6 @@ void Config::Save(obs_data_t *save_data)
 
 	obs_data_set_int(hadowplay_data, CONFIG_CUSTOM_FILENAME_ARRANGEMENT,
 			 this->m_custom_filename_arrangement);
-
-	obs_data_set_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS,
-			  this->m_include_screenshots);
 
 	obs_data_set_bool(hadowplay_data, CONFIG_PLAY_NOTIF_SOUND,
 			  this->m_play_notif_sound);
@@ -91,8 +94,14 @@ void Config::Load(obs_data_t *load_data)
 	this->m_restart_replay_buffer_on_save = obs_data_get_bool(
 		hadowplay_data, CONFIG_AUTOREPLY_RESET_ON_SAVE);
 
-	this->m_enable_folder_organisation = obs_data_get_bool(
+	this->m_enable_auto_organisation = obs_data_get_bool(
 		hadowplay_data, CONFIG_ENABLE_AUTO_ORGANISATION);
+
+	this->m_enable_folder_organisation = obs_data_get_bool(
+		hadowplay_data, CONFIG_ENABLE_FOLDER_ORGANISATION);
+
+	this->m_include_screenshots =
+		obs_data_get_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS);
 
 	this->m_use_custom_filename_format = obs_data_get_bool(
 		hadowplay_data, CONFIG_USE_CUSTOM_FILENAME_FORMAT);
@@ -103,9 +112,6 @@ void Config::Load(obs_data_t *load_data)
 	this->m_custom_filename_arrangement =
 		(FilenameArrangement)obs_data_get_int(
 			hadowplay_data, CONFIG_CUSTOM_FILENAME_ARRANGEMENT);
-
-	this->m_include_screenshots =
-		obs_data_get_bool(hadowplay_data, CONFIG_INCLUDE_SCREENSHOTS);
 
 	this->m_play_notif_sound =
 		obs_data_get_bool(hadowplay_data, CONFIG_PLAY_NOTIF_SOUND);
@@ -144,6 +150,9 @@ void Config::SetDefaults(obs_data_t *hadowplay_data)
 
 	obs_data_set_default_bool(hadowplay_data,
 				  CONFIG_ENABLE_AUTO_ORGANISATION, true);
+
+	obs_data_set_default_bool(hadowplay_data,
+				  CONFIG_ENABLE_FOLDER_ORGANISATION, true);
 
 	obs_data_set_default_bool(hadowplay_data,
 				  CONFIG_USE_CUSTOM_FILENAME_FORMAT, true);

@@ -6,6 +6,7 @@
 #define CONFIG_PLAY_NOTIF_SOUND "PlayNotifSound"
 #define CONFIG_SHOW_DESKTOP_NOTIF "ShowDesktopNotif"
 #define CONFIG_ENABLE_AUTO_ORGANISATION "EnableAutoOrganisation"
+#define CONFIG_ENABLE_FOLDER_ORGANISATION "EnableFolderOrganisation"
 #define CONFIG_USE_CUSTOM_FILENAME_FORMAT "UseCustomFilenameFormat"
 #define CONFIG_CUSTOM_FILENAME_ARRANGEMENT "CustomFilenameArrangment"
 #define CONFIG_CUSTOM_FILENAME_SEPERATOR "CustomFilenameSeperator"
@@ -47,6 +48,7 @@ public:
 	bool m_restart_replay_buffer_on_save = false;
 
 	// Auto organisation settings
+	bool m_enable_auto_organisation = true;
 	bool m_enable_folder_organisation = true;
 	bool m_include_screenshots = true;
 

@@ -174,18 +174,25 @@ std::string obs_hadowplay_move_output_file(const std::string &original_filepath,
 	std::string replay_filename = original_filepath.substr(filename_pos);
 
 	std::string target_directory =
-		original_filepath.substr(0, filename_pos) +
-		obs_hadowplay_cleanup_path_string(target_name);
+		original_filepath.substr(0, filename_pos);
 
-	if (os_file_exists(target_directory.c_str()) == false) {
-		obs_log(LOG_INFO, "Creating directory: %s",
-			target_directory.c_str());
-		if (os_mkdir(target_directory.c_str()) != 0) {
-			obs_log(LOG_ERROR,
-				"Failed to create directory: errno %i", errno);
-		} else {
-			obs_log(LOG_INFO, "Succesfully created directory: %s",
+	if (Config::Inst().m_enable_folder_organisation) {
+		target_directory =
+			target_directory +
+			obs_hadowplay_cleanup_path_string(target_name);
+
+		if (os_file_exists(target_directory.c_str()) == false) {
+			obs_log(LOG_INFO, "Creating directory: %s",
 				target_directory.c_str());
+			if (os_mkdir(target_directory.c_str()) != 0) {
+				obs_log(LOG_ERROR,
+					"Failed to create directory: errno %i",
+					errno);
+			} else {
+				obs_log(LOG_INFO,
+					"Succesfully created directory: %s",
+					target_directory.c_str());
+			}
 		}
 	}
 
@@ -571,7 +578,7 @@ void obs_hadowplay_default_replay_buffer_event_callback(
 		}
 
 		std::string target_name;
-		if (Config::Inst().m_enable_folder_organisation == true &&
+		if (Config::Inst().m_enable_auto_organisation == true &&
 		    obs_hadowplay_get_captured_name(target_name) == true) {
 
 			std::string new_filepath =
@@ -616,7 +623,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			return;
 		}
 
-		if (Config::Inst().m_enable_folder_organisation == true &&
+		if (Config::Inst().m_enable_auto_organisation == true &&
 		    Config::Inst().m_include_screenshots == true) {
 
 			std::string target_name;
@@ -660,7 +667,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			return;
 		}
 
-		if (Config::Inst().m_enable_folder_organisation == true) {
+		if (Config::Inst().m_enable_auto_organisation == true) {
 
 			if (recording_target_name.empty() == true) {
 				std::string target_name;

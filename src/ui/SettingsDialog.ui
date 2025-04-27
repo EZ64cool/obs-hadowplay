@@ -184,7 +184,7 @@
    <item>
     <widget class="QGroupBox" name="group_box_organisation">
      <property name="toolTip">
-      <string/>
+      <string>OBSHadowplay.Settings.Organisation.EnableAutoOrganisation</string>
      </property>
      <property name="title">
       <string>OBSHadowplay.Settings.Organisation</string>
@@ -193,7 +193,7 @@
       <bool>false</bool>
      </property>
      <property name="checkable">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1" columnminimumwidth="100,0">
       <property name="leftMargin">
