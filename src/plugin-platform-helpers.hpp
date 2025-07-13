@@ -25,3 +25,5 @@ EXTERNC bool obs_hadowplay_show_notification(const std::string &title,
 EXTERNC bool
 obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 					   std::string &product_name);
+
+EXTERNC int strcmpi(const char* a, const char* b);

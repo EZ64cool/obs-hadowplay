@@ -8,4 +8,9 @@ extern bool obs_hadowplay_get_fullscreen_window_name(struct dstr *process_name)
 	UNUSED_PARAMETER(process_name);
 	return false;
 }
+
+extern int strcmpi(const char* a, const char* b)
+{
+	return strcasecmp(a, b);
+}
 #endif

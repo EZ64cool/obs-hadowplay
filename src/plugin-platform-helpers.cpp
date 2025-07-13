@@ -37,12 +37,12 @@ bool obs_hadowplay_show_notification(const std::string &title,
 			auto systemTray =
 				static_cast<QSystemTrayIcon *>(systemTrayPtr);
 
-			auto notification =
+			auto notif =
 				static_cast<SystemTrayNotification *>(param);
-			systemTray->showMessage(notification->title,
-						notification->message,
+			systemTray->showMessage(notif->title,
+						notif->message,
 						QSystemTrayIcon::NoIcon);
-			delete notification;
+			delete notif;
 		},
 		(void *)notification, false);
 

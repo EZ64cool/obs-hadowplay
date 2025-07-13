@@ -305,6 +305,8 @@ void obs_hadowplay_default_replay_buffer_event_callback(
 
 void obs_hadowplay_replay_buffer_deactivated(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
+
 	obs_frontend_add_event_callback(
 		obs_hadowplay_default_replay_buffer_event_callback, NULL);
 
@@ -463,6 +465,8 @@ bool obs_hadowplay_close_update_thread()
 
 void obs_hadowplay_win_capture_hooked(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
+
 	if (calldata == nullptr)
 		return;
 
@@ -475,16 +479,22 @@ void obs_hadowplay_win_capture_hooked(void *data, calldata_t *calldata)
 		return;
 
 	// TODO
+	UNUSED_PARAMETER(source);
+	UNUSED_PARAMETER(title);
+	UNUSED_PARAMETER(win_class);
 }
 
 void obs_hadowplay_win_capture_unhooked(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
+	
 	if (calldata == nullptr)
 		return;
 
 	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
 
 	// TODO
+	UNUSED_PARAMETER(source);
 }
 
 #pragma endregion
@@ -493,6 +503,8 @@ void obs_hadowplay_win_capture_unhooked(void *data, calldata_t *calldata)
 
 void obs_hadowplay_source_activated(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
+
 	if (calldata == nullptr)
 		return;
 
@@ -512,6 +524,8 @@ void obs_hadowplay_source_activated(void *data, calldata_t *calldata)
 
 void obs_hadowplay_source_deactivated(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
+
 	if (calldata == nullptr)
 		return;
 
