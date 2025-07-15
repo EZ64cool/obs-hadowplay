@@ -38,7 +38,7 @@ target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-platform-helpers.cpp
           src/plugin-windows.cpp
-          src/plugin-linux.c
+          src/plugin-linux.cpp
           src/plugin-macos.c
           src/plugin-main.cpp
           src/config/config.hpp

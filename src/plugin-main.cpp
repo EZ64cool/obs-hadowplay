@@ -34,13 +34,6 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 #define TEXT_SETTINGS_MENU obs_module_text("OBSHadowplay.Settings")
 
-bool obs_hadowplay_is_capture_source(obs_source_t *source)
-{
-	return (source != nullptr &&
-		(strcmpi(obs_source_get_id(source), "game_capture") == 0 ||
-		 strcmpi(obs_source_get_id(source), "window_capture") == 0));
-}
-
 bool obs_hadowplay_is_capture_source_hooked(obs_source_t *source)
 {
 	calldata_t hooked_calldata;

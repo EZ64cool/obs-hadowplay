@@ -347,4 +347,11 @@ bool obs_hadowplay_is_exe_excluded(const char *exe)
 
 	return false;
 }
+
+extern bool obs_hadowplay_is_capture_source(obs_source_t *source)
+{
+	return (source != nullptr &&
+		(strcmpi(obs_source_get_id(source), "game_capture") == 0 ||
+		 strcmpi(obs_source_get_id(source), "window_capture") == 0));
+}
 #endif

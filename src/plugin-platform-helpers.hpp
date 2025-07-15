@@ -26,4 +26,4 @@ EXTERNC bool
 obs_hadowplay_get_product_name_from_source(obs_source_t *source,
 					   std::string &product_name);
 
-EXTERNC int strcmpi(const char* a, const char* b);
+EXTERNC bool obs_hadowplay_is_capture_source(obs_source_t *source);
