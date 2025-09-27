@@ -37,9 +37,6 @@ endif()
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-platform-helpers.cpp
-          src/plugin-windows.cpp
-          src/plugin-linux.c
-          src/plugin-macos.c
           src/plugin-main.cpp
           src/config/config.hpp
           src/config/config.cpp
@@ -48,7 +45,14 @@ target_sources(
           src/ui/SettingsDialog.ui)
 
 if(OS_WINDOWS)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-windows.cpp)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE version)
+elseif(OS_LINUX)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-linux.cpp)
+  find_package(X11 REQUIRED)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE X11::X11)
+elseif(OS_MACOS)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macos.c)
 endif()
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

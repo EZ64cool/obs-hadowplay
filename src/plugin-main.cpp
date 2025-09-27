@@ -26,6 +26,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "plugin-support.h"
 #include "plugin-platform-helpers.hpp"
+
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <strings.h>
+#define strcmpi strcasecmp
+#endif
 #include "ui/SettingsDialog.hpp"
 #include "config/config.hpp"
 
@@ -41,6 +46,8 @@ bool obs_hadowplay_is_capture_source(obs_source_t *source)
 		 strcmpi(obs_source_get_id(source), "window_capture") == 0));
 }
 
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || \
+	defined(__TOS_WIN__)
 bool obs_hadowplay_is_capture_source_hooked(obs_source_t *source)
 {
 	calldata_t hooked_calldata;
@@ -63,6 +70,24 @@ bool obs_hadowplay_is_capture_source_hooked(obs_source_t *source)
 
 	return hooked;
 }
+#else
+bool obs_hadowplay_is_capture_source_hooked(obs_source_t *source)
+{
+	bool source_is_active = (obs_source_get_width(source) != 0 &&
+				 obs_source_get_height(source) != 0);
+	if (!source_is_active) {
+		return false;
+	}
+
+	std::string process_name;
+	if (!obs_hadowplay_get_product_name_from_source(source,
+							process_name)) {
+		return false;
+	}
+
+	return !obs_hadowplay_is_exe_excluded(process_name.c_str());
+}
+#endif
 
 void obs_hadowplay_enum_source_for_hooked_capture(obs_source_t *parent,
 						  obs_source_t *source,
@@ -305,6 +330,8 @@ void obs_hadowplay_default_replay_buffer_event_callback(
 
 void obs_hadowplay_replay_buffer_deactivated(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
+
 	obs_frontend_add_event_callback(
 		obs_hadowplay_default_replay_buffer_event_callback, NULL);
 
@@ -459,10 +486,14 @@ bool obs_hadowplay_close_update_thread()
 
 #pragma endregion
 
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || \
+	defined(__TOS_WIN__)
+
 #pragma region Hooked/UnHooked signals
 
 void obs_hadowplay_win_capture_hooked(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
 	if (calldata == nullptr)
 		return;
 
@@ -474,31 +505,42 @@ void obs_hadowplay_win_capture_hooked(void *data, calldata_t *calldata)
 	if (exe == nullptr)
 		return;
 
+	UNUSED_PARAMETER(source);
+	UNUSED_PARAMETER(title);
+	UNUSED_PARAMETER(win_class);
+
 	// TODO
 }
 
 void obs_hadowplay_win_capture_unhooked(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
 	if (calldata == nullptr)
 		return;
 
 	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
+	UNUSED_PARAMETER(source);
 
 	// TODO
 }
 
 #pragma endregion
 
+#endif
+
 #pragma region Activated/Deactivated signals
 
 void obs_hadowplay_source_activated(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
 	if (calldata == nullptr)
 		return;
 
 	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
 
 	if (obs_hadowplay_is_capture_source(source)) {
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || \
+	defined(__TOS_WIN__)
 		signal_handler_t *source_signal_handler =
 			obs_source_get_signal_handler(source);
 		signal_handler_connect(source_signal_handler, "hooked",
@@ -507,17 +549,21 @@ void obs_hadowplay_source_activated(void *data, calldata_t *calldata)
 		signal_handler_connect(source_signal_handler, "unhooked",
 				       &obs_hadowplay_win_capture_unhooked,
 				       nullptr);
+#endif
 	}
 }
 
 void obs_hadowplay_source_deactivated(void *data, calldata_t *calldata)
 {
+	UNUSED_PARAMETER(data);
 	if (calldata == nullptr)
 		return;
 
 	obs_source_t *source = (obs_source_t *)calldata_ptr(calldata, "source");
 
 	if (obs_hadowplay_is_capture_source(source)) {
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || \
+	defined(__TOS_WIN__)
 		signal_handler_t *source_signal_handler =
 			obs_source_get_signal_handler(source);
 		signal_handler_disconnect(source_signal_handler, "hooked",
@@ -526,6 +572,7 @@ void obs_hadowplay_source_deactivated(void *data, calldata_t *calldata)
 		signal_handler_disconnect(source_signal_handler, "unhooked",
 					  &obs_hadowplay_win_capture_unhooked,
 					  nullptr);
+#endif
 	}
 }
 

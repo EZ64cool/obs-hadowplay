@@ -4,6 +4,13 @@
 #include <util/dstr.h>
 #include <string>
 
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__) || \
+	defined(__TOS_WIN__)
+void obs_hadowplay_play_sound(const wchar_t *filepath);
+#else
+void obs_hadowplay_play_sound(const char *filepath);
+#endif
+
 #ifdef __cplusplus
 #define EXTERNC extern "C"
 #else
