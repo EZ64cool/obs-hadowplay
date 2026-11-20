@@ -11,6 +11,7 @@
 #define CONFIG_CUSTOM_FILENAME_ARRANGEMENT "CustomFilenameArrangment"
 #define CONFIG_CUSTOM_FILENAME_SEPERATOR "CustomFilenameSeperator"
 #define CONFIG_INCLUDE_SCREENSHOTS "IncludeScreenshots"
+#define CONFIG_DELETE_ORIGINAL_AFTER_REMUX "DeleteOriginalAfterRemux"
 #define CONFIG_EXCLUSION_ITEM_STRING "AppName"
 #define CONFIG_EXCLUSIONS "Exclusions"
 
@@ -51,6 +52,9 @@ public:
 	bool m_enable_auto_organisation = true;
 	bool m_enable_folder_organisation = true;
 	bool m_include_screenshots = true;
+
+	// Delete the original (e.g. .mkv) once OBS has automatically remuxed it
+	bool m_delete_original_after_remux = false;
 
 	// Custom filename setting
 	bool m_use_custom_filename_format = true;
