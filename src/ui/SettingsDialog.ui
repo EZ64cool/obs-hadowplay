@@ -252,6 +252,23 @@
         </layout>
        </widget>
       </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="delete_remux_original_checkbox">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="label_delete_remux_original">
+        <property name="text">
+         <string>OBSHadowplay.Settings.Organisation.DeleteOriginalAfterRemux</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="0">
        <widget class="QCheckBox" name="include_screenshots_checkbox">
         <property name="text">

@@ -23,6 +23,23 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/platform.h>
 #include <util/threading.h>
 #include <util/dstr.h>
+#include <util/config-file.h>
+
+#include <atomic>
+#include <chrono>
+#include <string>
+#include <thread>
+#include <vector>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <Windows.h>
+#endif
 
 #include "plugin-support.h"
 #include "plugin-platform-helpers.hpp"
@@ -224,6 +241,246 @@ void obs_hadowplay_notify_saved(const std::string &title,
 		obs_hadowplay_show_notification(title, filepath);
 	}
 }
+
+#pragma region Automatic remux support
+
+// OBS emits REPLAY_BUFFER_SAVED / RECORDING_STOPPED *before* it starts its own
+// "Automatically remux to mp4" job on the original path. Moving the file inside
+// the event callback therefore made OBS's remux fail (issue #61). When OBS is
+// going to remux, the file handling is deferred to a worker thread that waits
+// for the remux to finish and then organises the remuxed file.
+
+static std::atomic<bool> obs_hadowplay_shutting_down{false};
+
+static bool obs_hadowplay_file_unlocked(const std::string &path)
+{
+#ifdef _WIN32
+	wchar_t *wpath = nullptr;
+	if (os_utf8_to_wcs_ptr(path.c_str(), 0, &wpath) == 0 ||
+	    wpath == nullptr)
+		return false;
+
+	HANDLE handle = CreateFileW(wpath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+				    FILE_ATTRIBUTE_NORMAL, NULL);
+	bfree(wpath);
+
+	if (handle == INVALID_HANDLE_VALUE)
+		return false;
+
+	CloseHandle(handle);
+	return true;
+#else
+	return os_file_exists(path.c_str());
+#endif
+}
+
+static std::string obs_hadowplay_lowercase(std::string value)
+{
+	for (char &c : value)
+		c = (char)tolower((unsigned char)c);
+	return value;
+}
+
+// Mirrors OBSBasic::AutoRemux: returns the possible output paths OBS will
+// write the remuxed file to, or an empty list if OBS will not remux it.
+static std::vector<std::string>
+obs_hadowplay_get_auto_remux_targets(const std::string &path)
+{
+	std::vector<std::string> targets;
+
+	config_t *config = obs_frontend_get_profile_config();
+	if (config == nullptr ||
+	    config_get_bool(config, "Video", "AutoRemux") == false)
+		return targets;
+
+	const char *mode = config_get_string(config, "Output", "Mode");
+	const bool advanced = mode != nullptr &&
+			      astrcmpi(mode, "Advanced") == 0;
+
+	if (advanced) {
+		const char *rec_type =
+			config_get_string(config, "AdvOut", "RecType");
+		if (rec_type != nullptr && astrcmpi(rec_type, "FFmpeg") == 0)
+			return targets;
+	}
+
+	const char *extension_c = os_get_path_extension(path.c_str());
+	if (extension_c == nullptr)
+		return targets;
+
+	const std::string extension = extension_c;
+	const std::string extension_lower = obs_hadowplay_lowercase(extension);
+	const std::string base = path.substr(0, path.size() - extension.size());
+
+	if (extension_lower == ".avi")
+		return targets;
+
+	const char *rec_format = config_get_string(
+		config, advanced ? "AdvOut" : "SimpleOutput", "RecFormat2");
+	const std::string format = rec_format != nullptr ? rec_format : "";
+
+	if (format.rfind("fragmented", 0) == 0) {
+		targets.push_back(base + ".remuxed" + extension);
+		return targets;
+	}
+
+	if (extension_lower == ".mp4" || extension_lower == ".mov")
+		return targets;
+
+	targets.push_back(base + ".mp4");
+	targets.push_back(base + ".mov");
+	return targets;
+}
+
+static void obs_hadowplay_finish_after_remux(std::string original_path,
+					     std::vector<std::string> targets,
+					     bool organise,
+					     std::string target_name,
+					     std::string title)
+{
+	using namespace std::chrono;
+
+	char thread_name[64];
+	snprintf(thread_name, 64, "%s remux wait", PLUGIN_NAME);
+	os_set_thread_name(thread_name);
+
+	std::string remuxed_path;
+
+	// 1. Wait for OBS to start writing the remuxed file
+	const auto wait_start = steady_clock::now();
+	while (obs_hadowplay_shutting_down == false &&
+	       steady_clock::now() - wait_start < seconds(15)) {
+		for (const std::string &target : targets) {
+			if (os_file_exists(target.c_str())) {
+				remuxed_path = target;
+				break;
+			}
+		}
+		if (remuxed_path.empty() == false)
+			break;
+		os_sleep_ms(100);
+	}
+
+	bool remux_ok = false;
+
+	if (remuxed_path.empty() == false) {
+		// 2. Wait until OBS has released both files and the size is stable
+		int64_t last_size = -1;
+		int stable_checks = 0;
+		const auto remux_start = steady_clock::now();
+		while (obs_hadowplay_shutting_down == false &&
+		       steady_clock::now() - remux_start < hours(3)) {
+			const int64_t size =
+				os_get_file_size(remuxed_path.c_str());
+			const bool unlocked =
+				obs_hadowplay_file_unlocked(remuxed_path) &&
+				obs_hadowplay_file_unlocked(original_path);
+
+			if (unlocked && size > 0 && size == last_size) {
+				if (++stable_checks >= 3) {
+					remux_ok = true;
+					break;
+				}
+			} else {
+				stable_checks = 0;
+			}
+
+			last_size = size;
+			os_sleep_ms(500);
+		}
+	} else {
+		obs_log(LOG_WARNING,
+			"Automatic remux output not found for %s, organising the original file",
+			original_path.c_str());
+	}
+
+	if (obs_hadowplay_shutting_down == true)
+		return;
+
+	std::string final_path = original_path;
+
+	if (remux_ok) {
+		const int64_t original_size =
+			os_get_file_size(original_path.c_str());
+		const int64_t remuxed_size =
+			os_get_file_size(remuxed_path.c_str());
+
+		obs_log(LOG_INFO, "Automatic remux finished: %s",
+			remuxed_path.c_str());
+
+		// Only remove the original if the remux looks complete
+		const bool sane = original_size <= 0 ||
+				  remuxed_size >= (original_size / 10) * 8;
+
+		if (Config::Inst().m_delete_original_after_remux && sane) {
+			if (os_unlink(original_path.c_str()) == 0) {
+				obs_log(LOG_INFO,
+					"Deleted original after remux: %s",
+					original_path.c_str());
+			} else {
+				obs_log(LOG_ERROR,
+					"Failed to delete original after remux: %s (errno %i)",
+					original_path.c_str(), errno);
+				if (organise)
+					obs_hadowplay_move_output_file(
+						original_path, target_name);
+			}
+		} else if (organise) {
+			obs_hadowplay_move_output_file(original_path,
+						       target_name);
+		}
+
+		final_path = remuxed_path;
+		if (organise)
+			final_path = obs_hadowplay_move_output_file(
+				remuxed_path, target_name);
+	} else {
+		if (remuxed_path.empty() == false)
+			obs_log(LOG_WARNING,
+				"Timed out waiting for automatic remux of %s",
+				original_path.c_str());
+		if (organise)
+			final_path = obs_hadowplay_move_output_file(
+				original_path, target_name);
+	}
+
+	// The sound was played when the file was saved, show the desktop
+	// notification now that the file is in its final location
+	if (Config::Inst().m_show_desktop_notif == true)
+		obs_hadowplay_show_notification(title, final_path);
+}
+
+// Organises a saved replay/recording and notifies the user
+static void obs_hadowplay_handle_saved_file(const std::string &path,
+					    bool organise,
+					    const std::string &target_name,
+					    const std::string &title)
+{
+	const std::vector<std::string> remux_targets =
+		obs_hadowplay_get_auto_remux_targets(path);
+
+	if (remux_targets.empty() == false &&
+	    (organise || Config::Inst().m_delete_original_after_remux)) {
+		obs_log(LOG_INFO,
+			"OBS will remux %s, organising once the remux has finished",
+			path.c_str());
+		if (Config::Inst().m_play_notif_sound == true)
+			obs_hadowplay_play_notif_sound();
+
+		std::thread(obs_hadowplay_finish_after_remux, path,
+			    remux_targets, organise, target_name, title)
+			.detach();
+		return;
+	}
+
+	const std::string final_path =
+		organise ? obs_hadowplay_move_output_file(path, target_name)
+			 : path;
+
+	obs_hadowplay_notify_saved(title, final_path);
+}
+
+#pragma endregion
 
 using obs_hadowplay_time_point =
 	std::chrono::time_point<std::chrono::steady_clock>;
@@ -578,17 +835,12 @@ void obs_hadowplay_default_replay_buffer_event_callback(
 		}
 
 		std::string target_name;
-		if (Config::Inst().m_enable_auto_organisation == true &&
-		    obs_hadowplay_get_captured_name(target_name) == true) {
+		const bool organise =
+			Config::Inst().m_enable_auto_organisation == true &&
+			obs_hadowplay_get_captured_name(target_name) == true;
 
-			std::string new_filepath =
-				obs_hadowplay_move_output_file(replay_path_c,
-							       target_name);
-
-			replay_path_c = new_filepath.c_str();
-		}
-
-		obs_hadowplay_notify_saved("Replay Saved", replay_path_c);
+		obs_hadowplay_handle_saved_file(replay_path_c, organise,
+						target_name, "Replay Saved");
 
 		if (Config::Inst().m_restart_replay_buffer_on_save == true) {
 			obs_hadowplay_restart_replay_buffer();
@@ -623,6 +875,8 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			return;
 		}
 
+		std::string screenshot_path = screenshot_path_c;
+
 		if (Config::Inst().m_enable_auto_organisation == true &&
 		    Config::Inst().m_include_screenshots == true) {
 
@@ -630,16 +884,13 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			if (obs_hadowplay_get_captured_name(target_name) ==
 			    true) {
 
-				std::string new_filepath =
+				screenshot_path =
 					obs_hadowplay_move_output_file(
-						screenshot_path_c, target_name);
-
-				screenshot_path_c = new_filepath.c_str();
+						screenshot_path, target_name);
 			}
 		}
 
-		obs_hadowplay_notify_saved("Screenshot Saved",
-					   screenshot_path_c);
+		obs_hadowplay_notify_saved("Screenshot Saved", screenshot_path);
 		break;
 	}
 
@@ -667,6 +918,7 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 			return;
 		}
 
+		bool organise = false;
 		if (Config::Inst().m_enable_auto_organisation == true) {
 
 			if (recording_target_name.empty() == true) {
@@ -681,18 +933,12 @@ void obs_hadowplay_frontend_event_callback(enum obs_frontend_event event,
 				}
 			}
 
-			if (recording_target_name.empty() == false) {
-
-				std::string new_filepath =
-					obs_hadowplay_move_output_file(
-						recording_path_c,
-						recording_target_name);
-
-				recording_path_c = new_filepath.c_str();
-			}
+			organise = recording_target_name.empty() == false;
 		}
 
-		obs_hadowplay_notify_saved("Recording Saved", recording_path_c);
+		obs_hadowplay_handle_saved_file(recording_path_c, organise,
+						recording_target_name,
+						"Recording Saved");
 
 		break;
 	}
@@ -763,6 +1009,8 @@ bool obs_module_load(void)
 
 void obs_module_unload()
 {
+	obs_hadowplay_shutting_down = true;
+
 	// Make sure the update thread has closed
 	obs_hadowplay_close_update_thread();
 

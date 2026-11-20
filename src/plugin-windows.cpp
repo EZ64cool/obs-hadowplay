@@ -15,6 +15,26 @@
 #include "plugin-platform-helpers.hpp"
 #include "config/config.hpp"
 
+#include <ShlObj.h>
+#pragma comment(lib, "Shell32.lib")
+#pragma comment(lib, "Ole32.lib")
+
+// Opens Explorer with the given file selected
+void obs_hadowplay_win_open_file_location(const wchar_t *path)
+{
+	HRESULT co = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+	PIDLIST_ABSOLUTE pidl = nullptr;
+	if (SUCCEEDED(SHParseDisplayName(path, nullptr, &pidl, 0, nullptr)) &&
+	    pidl != nullptr) {
+		SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+		CoTaskMemFree(pidl);
+	}
+
+	if (SUCCEEDED(co))
+		CoUninitialize();
+}
+
 void obs_hadowplay_play_sound(const wchar_t *filepath)
 {
 	PlaySound(filepath, NULL, SND_FILENAME | SND_ASYNC);
